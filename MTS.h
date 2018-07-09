@@ -15,19 +15,74 @@ void printDebugLocIfPosibble(Value *v);
 
 class MyFunction;
 class MyBasicBlock;
+class MyLoop;
 class LoopIndvar;
 class MTSNode;
-
-// class OffsetRecorder
 
 // class AttrBase
 // ========================================================
 
+class AttrBase {};
+
 // class Instrumentation
 // =========================================================
 
+class Instrumentation {
+public:
+  using InstrumentationFuncType = function<void(MTSNode *)>;
+
+private:
+  InstrumentationFuncType InstrumentFunction;
+
+public:
+  Instrumentation(InstrumentationFuncType func) : InstrumentFunction(func) {}
+
+  void doInstrumentation(MTSNode *node) { InstrumentFunction(node); }
+};
+
 // class Pattern
 // ===========================================================
+
+class Pattern {
+  string pat;
+
+  size_t cursor;
+
+public:
+  Pattern(string str) : pat(str), cursor(0) {}
+
+  Pattern() : pat("") {}
+
+  string &str() { return pat; }
+
+  // If a pattern is constant expression.
+  // A constant pattern should only contains numbers, arithmetic operators and
+  // the constant prefix 'c'.
+  // TODO: More rules may be included here.
+  static bool isConstantPattern(string &str) {
+    for (auto c : str) {
+      if (isalpha(c) && c != 'c')
+        return false;
+    }
+    return true;
+  }
+
+  void clear() { cursor = 0; }
+
+  pair<char, unsigned> next() {
+    auto sz = pat.size();
+    if (cursor == sz) {
+      clear();
+      return {};
+    }
+    char ty = pat[cursor++];
+    unsigned id = 0;
+    while (cursor < sz && isdigit(pat[cursor])) {
+      id = id * 10 + pat[cursor++] - '0';
+    }
+    return {ty, id};
+  }
+};
 
 // class MTSNode and subclasses
 // ==========================================================
@@ -74,28 +129,15 @@ private:
 
   AttrBase *Attr;
 
-  bool Recorded;
-
-  map<Value *, OffsetRecorder *> OffsetRange;
-
-  vector<Value *> Basements;
-
 protected:
   MTSNode(Value &V, MTSKind K, MyBasicBlock &Parent)
-      : TheValue(V), Kind(K), Parent(Parent), ID(MTSID++), Attr(nullptr),
-        Recorded(false) {}
+      : TheValue(V), Kind(K), Parent(Parent), ID(MTSID++), Attr(nullptr) {}
 
   // For derived class setting Pattern.
   // TODO: Too slow!
   void setPattern(string p) { Pat = p; }
 
 public:
-  ~MTSNode() {
-    for (auto &pr : OffsetRange) {
-      delete pr.second;
-    }
-  }
-
   string &getPatternString() { return Pat.str(); }
 
   Pattern &getPattern() { return Pat; }
@@ -119,28 +161,6 @@ public:
   void setAttr(AttrBase *p) { Attr = p; }
 
   AttrBase *getAttr() { return Attr; }
-
-  bool isRecorded() { return Recorded; }
-
-  void setRecorded(bool flag) { Recorded = flag; }
-
-  void setRecorded() { Recorded = true; }
-
-  void addOffsetRange(Value *base, long maxoff, long minoff) {
-    auto it = OffsetRange.find(base);
-    if (it == OffsetRange.end()) {
-      OffsetRange.insert({base, new OffsetRecorder(base)});
-    } else {
-      auto ofst = it->second;
-      ofst->updateRange(maxoff, minoff);
-    }
-  }
-
-  map<Value *, OffsetRecorder *> &getOffsetRange() { return OffsetRange; }
-
-  void addBasements(Value *base) { Basements.push_back(base); }
-
-  vector<Value *> &getBasements() { return Basements; }
 };
 
 // Unhandled kind of MTSNode, default
@@ -231,6 +251,7 @@ public:
 
   LoopIndvar *getIndvarOf() { return IndvarOf; }
 
+  MyLoop *tryToGetMyLoop();
   void setIndvarOf(LoopIndvar *LI) { IndvarOf = LI; }
 
   bool isLoopIndvar() { return IndvarOf != nullptr; }
@@ -321,24 +342,33 @@ class MTSMemAccess : public MTSNode {
 protected:
   Value *Basement;
 
-  bool ConstantOffset;
+  vector<Value *> Dependencies;
 
-  bool MayNeedInstrument;
+  // bool IsConstant;
 
-  bool HasOneDependency;
+  bool FullInstrumentation;
 
   void analysisMemAccess(Value *addr);
 
 public:
   MTSMemAccess(Value &V, MTSKind K, MyBasicBlock &Parent)
-      : MTSNode(V, K, Parent), ConstantOffset(false), MayNeedInstrument(true),
-        HasOneDependency(false) {}
+      : MTSNode(V, K, Parent), FullInstrumentation(false) {}
 
-  bool isConstantOffset() { return ConstantOffset; }
+  static bool classof(const MTSNode *node) {
+    return node->getKind() == StoreKind || node->getKind() == LoadKind;
+  }
 
-  bool mayNeedInstrument() { return MayNeedInstrument; }
+  bool isDependenciesConstant() { return Dependencies.empty(); }
 
-  bool hasOneDependency() { return HasOneDependency; }
+  vector<Value *> &getDependencies() { return Dependencies; }
+
+  Value *getBasement() { return Basement; }
+
+  bool isDependencyLoopIndvar(Value *v);
+
+  MyLoop *tryToGetMyLoopFor(Value *v);
+
+  bool mustTakeFullInstrumentation() { return FullInstrumentation; }
 };
 
 // Store inst
@@ -368,8 +398,106 @@ public:
 };
 
 // class LoopIndvar.
+// Record one of the induction variables for a specific Loop.
+// A loop may contain one or more loop induction variables.
+class LoopIndvar {
+  MTSPhiNode &PHI;
+
+  MyLoop *ML;
+
+  Value *InitValue;
+
+  Value *FiniValue;
+
+  string Step;
+
+  char OpSymbol;
+
+  int Incresement;
+
+public:
+  LoopIndvar(MTSPhiNode &PHI) : PHI(PHI) { PHI.setIndvarOf(this); }
+
+  LoopIndvar(MTSPhiNode &PHI, MyLoop *ML, char OpSymbol, int Incresement)
+      : PHI(PHI), ML(ML), OpSymbol(OpSymbol), Incresement(Incresement) {
+    // errs() << "set phi as indvar\n";
+    PHI.setIndvarOf(this);
+  }
+
+  MyLoop *getMyLoop() { return ML; }
+};
 
 // class MyLoop.
+class MyLoop {
+  Loop &TheLoop;
+
+  MyFunction &Parent;
+
+  int Depth;
+
+  const unsigned ID;
+
+  vector<LoopIndvar *> Indvars;
+
+  bool Analyzed;
+
+  BasicBlock *preheader;
+
+  BasicBlock *latch;
+
+  BasicBlock *header;
+
+  SmallVector<BasicBlock *, 8> exitBlocks;
+
+  SmallVector<BasicBlock *, 8> exitingBlocks;
+
+  BasicBlock *exitBlock;
+
+  BasicBlock *exitingBlock;
+
+  AttrBase *Attr;
+
+public:
+  MyLoop(Loop &L, unsigned id, MyFunction &Parent)
+      : TheLoop(L), ID(id), Parent(Parent), Analyzed(false), Attr(nullptr) {
+    preheader = L.getLoopPreheader();
+    latch = L.getLoopLatch();
+    header = L.getHeader();
+    L.getExitBlocks(exitBlocks);
+    L.getExitingBlocks(exitingBlocks);
+    exitBlock = L.getExitBlock();
+    exitingBlock = L.getExitingBlock();
+    Depth = L.getLoopDepth();
+  }
+
+  Loop &getLoop() { return TheLoop; }
+
+  vector<LoopIndvar *> getIndvars() { return Indvars; }
+
+  const unsigned getID() { return ID; }
+
+  void computeIndvars();
+
+  BasicBlock *getLoopPreheader() { return preheader; }
+
+  BasicBlock *getLoopLatch() { return latch; }
+
+  BasicBlock *getHeader() { return header; }
+
+  SmallVector<BasicBlock *, 8> &getExitBlocks() { return exitBlocks; }
+
+  SmallVector<BasicBlock *, 8> &getExitingBlocks() { return exitingBlocks; }
+
+  BasicBlock *getExitBlock() { return exitBlock; }
+
+  BasicBlock *getExitingBlock() { return exitingBlock; }
+
+  void setAttr(AttrBase *p) { Attr = p; }
+
+  AttrBase *getAttr() { return Attr; }
+
+  int getLoopDepth() { return Depth; }
+};
 
 // class MyModuleContext
 // Class that stores the Module context including GlobalVariables, DataLayout,
@@ -472,6 +600,16 @@ public:
       : TheBB(BB), LoopID(-1), Parent(MF), ID(MBBID++), Attr(nullptr),
         MemChange(false) {
     buildMTS();
+    for (auto node : MTS) {
+      if (auto ci = dyn_cast<CallInst>(node->getInstruction())) {
+        if (auto fn = ci->getCalledFunction()) {
+          auto fname = fn->getName();
+          if (fname.equals("malloc") || fname.equals("realloc") ||
+              fname.equals("calloc") || fname.equals("free"))
+            MemChange = true;
+        }
+      }
+    }
   }
 
   BasicBlock &getBB() { return TheBB; }
@@ -512,10 +650,6 @@ class MyFunction {
   map<Value *, MTSNode *> V2MTS;
 
   vector<Argument *> Args;
-
-  vector<Instrumentation *> ArgInstrumentations;
-
-  map<Argument *, ArgOffsetRecorder *> ArgOffsetRanges;
 
   void dependenceAnalysis();
 
@@ -595,9 +729,6 @@ public:
   AttrBase *getAttr() { return Attr; }
 
   bool isMemChange() { return MemChange; }
-
-  void addArgumentRecorder(Argument *arg, Value *base, long maxoff,
-                           long minoff);
 
   friend class MyBasicBlock;
 };
