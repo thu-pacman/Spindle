@@ -1,4 +1,5 @@
-#Spindle
+# Spindle
+===============================
 
 Spindle is a efficient memory access monitoring framework. Unlike methods delaying all checks to runtime or performing task-specific optimization at compile time, Spindle performs common static analysis to identify predictable memory access patterns into a compact program structure summary. Custom memory monitoring tools can then be developed on top of Spindle, leveraging the structural information extracted to dramatically reduce the amount of instrumentation that incurs heavy runtime memory address examination or recording.
 
@@ -31,6 +32,7 @@ add_subdirectory(spindle)  # Use your pass name here.
 add_library(SpindlePass MODULE
     # List your source files here.
     Spindle.cpp
+    OtherSpindleFile.cpp
 )
 
 # Use C++11 to compile your pass (i.e., supply -std=c++11).
@@ -57,6 +59,7 @@ LLVM_DIR="../clean-build/lib/cmake/llvm" cmake .
 
 LLVM_DIR should contains the file named “LLVMConfig.cmake” or “llvm-config.cmake”
 
+Compile your own code:
 ```
 clang -Xclang -load -Xclang mypass.so main.c
 ```
