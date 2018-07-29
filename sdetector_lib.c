@@ -30,7 +30,7 @@ uint64_t MASK[4] = {0b11, 0b1100, 0b110000, 0b11000000};
 
 void __init_main() {
   printf("Start\n");
-  SHADOW_BASE = (uint64_t)malloc(PRIME*sizeof(int)*2);
+  SHADOW_BASE = (uint64_t)malloc(PRIME * sizeof(int) * 2);
   LOW_SHADOW_BASE = (LowShadowObj *)malloc(536870912 * sizeof(LowShadowObj));
   LOW_SHADOW_FREE_BASE =
       (LowShadowObj *)malloc(536870912 * sizeof(LowShadowObj));
@@ -83,7 +83,8 @@ void __record_free(void *p) {
 void __record_malloc(void *p, size_t sz) {
   LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].ptr = p;
   LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].caller = __builtin_return_address(0);
-  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
   // LOW_SHADOW_BASE[LOW_SHADOW_OFFSET++].ptr = p;
   char *sdp = (char *)SHADOW(p);
   uint8_t off = OFFSET(p);
@@ -98,7 +99,8 @@ void __record_realloc(void *p, void *old_p, size_t sz) {
   LOW_SHADOW_FREE_BASE[LOW_SHADOW_FREE_OFFSET++].ptr = old_p;
   LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].ptr = p;
   LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].caller = __builtin_return_address(0);
-  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
   // LOW_SHADOW_BASE[LOW_SHADOW_OFFSET++].ptr = p;
   char *sdp = (char *)SHADOW(p);
   uint8_t off = OFFSET(p);
@@ -116,7 +118,9 @@ void __record_realloc(void *p, void *old_p, size_t sz) {
 
 void __record_calloc(void *p, size_t num, size_t sz) {
   LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].ptr = p;
-  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].caller = __builtin_return_address(0);  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].caller = __builtin_return_address(0);
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].size = sz;
+  LOW_SHADOW_BASE[LOW_SHADOW_OFFSET].is_free = 0;
   // LOW_SHADOW_BASE[LOW_SHADOW_OFFSET++].ptr = p;
   char *sdp = (char *)SHADOW(p);
   uint8_t off = OFFSET(p);
@@ -190,6 +194,25 @@ void __is_loop_in_range() {
   // (*sdp) |= (sd << off);
 }
 
-void __is_in_range_at_loop_end() { ++cntl; }
+void __is_in_range_at_loop_end(void *base, void *addr) {
+  ++cntl;
+  char *sdp = (char *)SHADOW(base);
+  int *off_at_ls = sdp + sizeof(int);
+  unsigned sz = LOW_SHADOW_BASE[*off_at_ls].size;
+  if (addr - base >= sz) {
+    printf("%x, %x, %u, ", base, addr, sz);
+    printf("Out of boundary at loop-end.\n");
+  }
+}
 
-void __is_in_range_at_multi_loop_end() { ++cntl; }
+void __is_in_range_at_multi_loop_end(void *base, void *addr) {
+  ++cntl;
+  ++cntl;
+  char *sdp = (char *)SHADOW(base);
+  int *off_at_ls = sdp + sizeof(int);
+  unsigned sz = LOW_SHADOW_BASE[*off_at_ls].size;
+  if (addr - base >= sz) {
+    printf("%x, %x, %u, ", base, addr, sz);
+    printf("Out of boundary at multi-loop-end.\n");
+  }
+}

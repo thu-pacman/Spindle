@@ -238,8 +238,8 @@ void SDetector::analysisMemAccess(MTSMemAccess *mn) {
   base->print(errs());
   errs() << "base\n";
   // Constant, don't have to instrument.
-  // if (mn->mustTakeFullInstrumentation()) {
-  if (true) {
+  if (mn->mustTakeFullInstrumentation()) {
+    // if (true) {
     StringRef fname = "__is_in_range";
     vector<Value *> args;
     args.push_back(base);
@@ -280,9 +280,20 @@ void SDetector::analysisMemAccess(MTSMemAccess *mn) {
       StringRef fname = "__is_in_range_at_loop_end";
       vector<Value *> args;
       args.push_back(base);
-      args.push_back(mn->getInstruction());
-      args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()), idx));
-      // errs() << "badref " << idx << ": ";
+      // args.push_back(mn->getInstruction());
+      Value *ptr;
+      if (MTSLoad::classof(mn)) {
+        ptr = dyn_cast<LoadInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "load inst ptr: ";
+      } else {
+        ptr = dyn_cast<StoreInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "store inst ptr: ";
+      }
+      ptr->print(errs());
+      args.push_back(ptr);
+      errs() << "\n";
+      // args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()),
+      // idx)); errs() << "badref " << idx << ": ";
       // mn->getInstruction()->print(errs());
       // errs() << "\n";
       // ++idx;
@@ -300,8 +311,17 @@ void SDetector::analysisMemAccess(MTSMemAccess *mn) {
       vector<Value *> args;
       args.push_back(base);
       errs() << "Full instrumentation\n";
-      args.push_back(mn->getInstruction());
-      args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()), idx));
+      Value *ptr;
+      if (MTSLoad::classof(mn)) {
+        ptr = dyn_cast<LoadInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "load inst ptr: ";
+      } else {
+        ptr = dyn_cast<StoreInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "store inst ptr: ";
+      }
+      ptr->print(errs());
+      args.push_back(ptr);
+      errs() << "\n";
       // errs() << "badref " << idx << ": ";
       // mn->getInstruction()->print(errs());
       // errs() << "\n";
@@ -371,7 +391,18 @@ void SDetector::analysisMemAccess(MTSMemAccess *mn) {
       // TODO: Add instrumentation.
       StringRef fname = "__is_in_range_at_multi_loop_end";
       vector<Value *> args;
-      // args.push_back(base);
+      args.push_back(base);
+      Value *ptr;
+      if (MTSLoad::classof(mn)) {
+        ptr = dyn_cast<LoadInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "load inst ptr: ";
+      } else {
+        ptr = dyn_cast<StoreInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "store inst ptr: ";
+      }
+      ptr->print(errs());
+      args.push_back(ptr);
+      errs() << "\n";
       // args.push_back(mn->getInstruction());
       // args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()),
       // idx));
@@ -394,12 +425,23 @@ void SDetector::analysisMemAccess(MTSMemAccess *mn) {
       StringRef fname = "__is_in_range";
       vector<Value *> args;
       args.push_back(base);
+      Value *ptr;
+      if (MTSLoad::classof(mn)) {
+        ptr = dyn_cast<LoadInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "load inst ptr: ";
+      } else {
+        ptr = dyn_cast<StoreInst>(mn->getInstruction())->getPointerOperand();
+        errs() << "store inst ptr: ";
+      }
+      ptr->print(errs());
+      args.push_back(ptr);
+      errs() << "\n";
       errs() << "Full instrumentation\n";
       // args.push_back(mn->getInstruction());
       ArrayRef<Value *> argsRef(args);
       instrumentAfterInstruction(mn->getInstruction(), fname, voidTy, argsRef);
     }
   }
-}
+} // namespace llvm
 
 } // namespace llvm
