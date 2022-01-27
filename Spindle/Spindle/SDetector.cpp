@@ -49,7 +49,7 @@ static bool instrumentBeforeInstruction(Instruction *inst, StringRef &fname,
 
 static bool instrumentAfterInstruction(Instruction *inst, StringRef &fname,
                                        Type *retTy, ArrayRef<Value *> &args) {
-  if (TerminatorInst::classof(inst)) {
+  if (inst->isTerminator()) {
     errs() << "Cannnot insert function after terminator inst\n";
     return false;
   }
