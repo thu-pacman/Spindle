@@ -637,6 +637,36 @@ void MyFunction::getDependency(MTSNode *node) {
   node->computePattern(operands_patterns);
 }
 
+bool isGEPWithNoNotionalOverIndexing(ConstantExpr *ce) {
+  if (ce == nullptr)
+    return false;
+  if (ce->getOpcode() != Instruction::GetElementPtr)
+    return false;
+
+  gep_type_iterator GEPI = gep_type_begin(ce), E = gep_type_end(ce);
+  User::const_op_iterator OI = ce->op_begin();
+
+  // Skip the first index, as it has no static limit.
+  ++GEPI;
+  ++OI;
+
+  // The remaining indices must be compile-time known integers within the
+  // bounds of the corresponding notional static array types.
+  for (; GEPI != E; ++GEPI, ++OI) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(OI);
+    if (!CI)
+      return false;
+    // if (ArrayType *ATy = dyn_cast<ArrayType>(GEPI.getStructType()))
+    if (GEPI.isStruct())
+      // if (CI->getValue().getActiveBits() > 64 ||
+      //     CI->getZExtValue() >= ATy->getNumElements())
+      return false;
+  }
+
+  // All the indices checked out.
+  return true;
+}
+
 string MyFunction::getDependencyForConstant(Constant *cst) {
   ostringstream oss;
   // errs() << getStringFromValue(cst) << "\n";
@@ -646,10 +676,14 @@ string MyFunction::getDependencyForConstant(Constant *cst) {
     // The expression above will throw an error when the bitwidth of this
     // ConstantInt is larger than 64.
     // TODO: Is this ConstantInt signed?
-    else
-      oss << "c" << CI->getValue().toString(10, true);
+    else {
+      SmallString<1024> ss;
+      CI->getValue().toString(ss, 10, true);
+      auto s = ss.str().str();
+      oss << "c" << s;
+    }
   } else if (auto CE = dyn_cast<ConstantExpr>(cst)) {
-    if (CE->isGEPWithNoNotionalOverIndexing()) {
+    if (isGEPWithNoNotionalOverIndexing(CE)) {
       vector<string> op_patterns;
       for (auto it = CE->op_begin(), ope = CE->op_end(); it != ope; ++it) {
         if (auto cst = dyn_cast<Constant>(*it)) {

@@ -49,7 +49,7 @@ static bool instrumentBeforeInstruction(Instruction *inst, StringRef &fname,
 
 static bool instrumentAfterInstruction(Instruction *inst, StringRef &fname,
                                        Type *retTy, ArrayRef<Value *> &args) {
-  if (TerminatorInst::classof(inst)) {
+  if (inst->isTerminator()) {
     errs() << "Cannnot insert function after terminator inst\n";
     return false;
   }
@@ -144,7 +144,7 @@ void SDetector::instrumentForMalloc(MTSNode *node) {
   // errs() << "Instrumenting for malloc\n";
   auto inst = node->getInstruction();
   auto CI = dyn_cast<CallInst>(inst);
-  auto numArgs = CI->getNumArgOperands();
+  auto numArgs = CI->arg_size();
   assert(numArgs != 1 && "the number of malloc's args is not 1.");
   auto M = inst->getModule();
   auto sz = CI->getArgOperand(0);
@@ -165,7 +165,7 @@ void SDetector::instrumentForRealloc(MTSNode *node) {
   // errs() << "Instrumenting for realloc\n";
   auto inst = node->getInstruction();
   auto CI = dyn_cast<CallInst>(inst);
-  auto numArgs = CI->getNumArgOperands();
+  auto numArgs = CI->arg_size();
   assert(numArgs != 2 && "the number of realloc's args is not 2.");
   auto M = inst->getModule();
   auto p = CI->getArgOperand(0);
@@ -188,7 +188,7 @@ void SDetector::instrumentForCalloc(MTSNode *node) {
   // errs() << "Instrumenting for calloc\n";
   auto inst = node->getInstruction();
   auto CI = dyn_cast<CallInst>(inst);
-  auto numArgs = CI->getNumArgOperands();
+  auto numArgs = CI->arg_size();
   assert(numArgs != 2 && "the number of calloc's args is not 2.");
   auto M = inst->getModule();
   auto num = CI->getArgOperand(0);
@@ -211,7 +211,7 @@ void SDetector::instrumentForFree(MTSNode *node) {
   // errs() << "Instrumenting for free\n";
   auto inst = node->getInstruction();
   auto CI = dyn_cast<CallInst>(inst);
-  auto numArgs = CI->getNumArgOperands();
+  auto numArgs = CI->arg_size();
   assert(numArgs != 1 && "the number of free's args is not 1.");
   auto M = inst->getModule();
   auto p = CI->getArgOperand(0);

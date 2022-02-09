@@ -3,6 +3,7 @@
 
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/IR/Instructions.h"
+#include <map>
 #include <set>
 #include <vector>
 
