@@ -2,30 +2,22 @@
 #include "SDetector.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include <fstream>
 
 using namespace llvm;
 
 namespace {
 
-class SpindlePass : public ModulePass {
+class SpindlePass : public PassInfoMixin<SpindlePass> {
 public:
-  static char ID;
-
-  SpindlePass() : ModulePass(ID) {}
-
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesCFG();
-    AU.addRequired<LoopInfoWrapperPass>();
-  }
-
-  virtual bool runOnModule(Module &M) {
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
     errs() << "Begin: " << M.getModuleIdentifier() << "\n";
     auto MMC = MyModuleContext(M);
     auto i = 0;
@@ -55,8 +47,8 @@ public:
         auto initFunc = M.getOrInsertFunction("__init_main", funcType);
         Builder.CreateCall(initFunc);
       }
-      for (auto bb = main->begin(), bend = main->end(); bb != bend; ++bb) {
-        for (auto inst = bb->begin(), iend = bb->end(); inst != iend; ++inst) {
+      for (auto & bb : *main) {
+        for (auto inst = bb.begin(), iend = bb.end(); inst != iend; ++inst) {
           if (auto ri = dyn_cast<ReturnInst>(inst)) {
             IRBuilder<> Builder(&(*inst));
             vector<Type *> argsType;
@@ -108,7 +100,7 @@ public:
 
     // TODO: Delete all the new objects.
     errs() << "End\n";
-    return true;
+    return PreservedAnalyses::none();
   }
 
   void analysisFunction(Function &F, MyModuleContext &MMC) {
@@ -120,12 +112,15 @@ public:
     // 	BB.print(errs());
     // }
 
-    // DFS to tranverse all the loops in a specific function.
+    // DFS to traverse all the loops in a specific function.
     // TODO: Add this part to MyFunction.
-    LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>(F).getLoopInfo();
+    PassBuilder PB;
+    FunctionAnalysisManager FAM;
+    PB.registerFunctionAnalyses(FAM);
+    LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
     vector<Loop *> workspace;
-    for (auto it = LI.begin(); it != LI.end(); it++) {
-      workspace.push_back(*it);
+    for (auto it : LI) {
+      workspace.push_back(it);
     }
     while (!workspace.empty()) {
       auto L = workspace.back();
@@ -170,13 +165,19 @@ public:
 
 } // End of anonymous namespace.
 
-char SpindlePass::ID = 0;
-
-static RegisterPass<SpindlePass> X("spindle", "Spindle Pass");
-static void registerPass(const PassManagerBuilder &,
-                         legacy::PassManagerBase &PM) {
-  PM.add(new SpindlePass());
+extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
+llvmGetPassPluginInfo() {
+  return {
+    LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1",
+    [](PassBuilder &PB) {
+      PB.registerPipelineParsingCallback(
+              [](StringRef PassName, ModulePassManager &MPM, ...) {
+                if (PassName == "spindle") {
+                  MPM.addPass(SpindlePass());
+                  return true;
+                }
+                return false;
+              });
+    }
+  };
 }
-
-static RegisterStandardPasses
-    RegisterTheSpindlePass(PassManagerBuilder::EP_OptimizerLast, registerPass);

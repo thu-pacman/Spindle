@@ -586,7 +586,7 @@ class MyBasicBlock {
 
   vector<MTSNode *> MTS;
 
-  int LoopID;
+  unsigned LoopID;
 
   MyFunction &Parent;
 
@@ -615,9 +615,9 @@ public:
 
   BasicBlock &getBB() { return TheBB; }
 
-  void setLoopID(int id) { LoopID = id; }
+  void setLoopID(unsigned id) { LoopID = id; }
 
-  int getLoopID() { return LoopID; }
+  unsigned getLoopID() { return LoopID; }
 
   void buildMTS();
 
