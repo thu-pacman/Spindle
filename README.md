@@ -1,6 +1,6 @@
 # Spindle
 
-Spindle is a efficient memory access monitoring framework. Unlike methods delaying all checks to runtime or performing task-specific optimization at compile time, Spindle performs common static analysis to identify predictable memory access patterns into a compact program structure summary. Custom memory monitoring tools can then be developed on top of Spindle, leveraging the structural information extracted to dramatically reduce the amount of instrumentation that incurs heavy runtime memory address examination or recording.
+Spindle is an efficient memory access monitoring framework. Unlike methods delaying all checks to runtime or performing task-specific optimization at compile time, Spindle performs common static analysis to identify predictable memory access patterns into a compact program structure summary. Custom memory monitoring tools can then be developed on top of Spindle, leveraging the structural information extracted to dramatically reduce the amount of instrumentation that incurs heavy runtime memory address examination or recording.
 
 ## Requirements:
 LLVM 15.0.0
@@ -26,7 +26,7 @@ clang -O2 testloop.o ../lib/sdetector_lib.c -o testloop
 ``` -->
 ```shell
 clang -emit-llvm -O2 -c test_loop_out_of_bound.c
-opt -load ../build/Spindle/libSpindlePass.so --spindle test_loop_out_of_bound.bc -o opt_test.bc -enable-new-pm=0
+opt -load-pass-plugin=../build/Spindle/libSpindlePass.so -passes="spindle" test_loop_out_of_bound.bc -o opt_test.bc
 clang opt_test.bc ../lib/sdetector_lib.c -O2 -o testloop
 ```
 
