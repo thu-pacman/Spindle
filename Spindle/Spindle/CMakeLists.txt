@@ -1,12 +1,10 @@
 add_library(SpindlePass MODULE
     # List your source files here.
     Spindle.cpp
-    #Instrumentation.cpp  
-    MTS.cpp  
-    #Pattern.cpp  
-    SDetector.cpp  
-    #SLoop.cpp  
-    Spindle.cpp
+    STracer.cpp
+    visitor.cpp
+    AST.cpp
+    # ../../lib/sdetector_lib.c
 )
 
 # Use C++11 to compile your pass (i.e., supply -std=c++11).
