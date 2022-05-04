@@ -4,6 +4,7 @@ add_library(SpindlePass MODULE
     STracer.cpp
     visitor.cpp
     AST.cpp
+    MAS.cpp
     # ../../lib/sdetector_lib.c
 )
 

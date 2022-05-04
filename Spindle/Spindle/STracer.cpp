@@ -5,24 +5,36 @@ using namespace llvm;
 namespace llvm {
 
 void STracer::print() {
-    int tot = 0, computable = 0;
-    for (auto F: MAS.getFunctions()) {
+    for (auto F : MAS.getFunctions()) {
+        auto &rawF = F->getRawFunction();
+        errs() << "Entering function: " << rawF.getName() << "\n";
         auto indVars = F->getIndVarSet();
-        for (auto &BB : F->getRawFunction()) {
+        auto meta = F->getMeta();
+        auto visitor = GEPDependenceVisitor(meta, indVars);
+        errs() << "MemAccess formula:\n";
+        for (auto &BB : rawF) {
             for (auto &I : BB) {
                 if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    auto *formula = ASTVisitor(
-                            [&](Value *v) {
-                                return Constant::classof(v) ||
-                                       indVars.find(v) != indVars.end();
-                            }).visit(GEPI);
-                    ++tot;
-                    computable += formula->computable;
+                    visitor.visit(*GEPI);
+                    auto *formula = ASTVisitor([&](Value *v) {
+                                        return Constant::classof(v) ||
+                                               indVars.find(v) != indVars.end();
+                                    }).visit(GEPI);
+                    formula->print();
+                    errs() << '\n';
+                }
+            }
+        }
+        errs() << "static trace:\n";
+        for (auto &BB : F->getRawFunction()) {
+            for (auto &I : BB) {
+                if (dyn_cast<GetElementPtrInst>(&I) ||
+                    meta[&I].isGEPDependence) {
+                    errs() << I << '\n';
                 }
             }
         }
     }
-    errs() << "MemAccess analyzed: " << computable << '/' << tot << " computable\n";
 }
 
-} // namespace llvm
+}  // namespace llvm
