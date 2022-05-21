@@ -9,16 +9,16 @@ void MASLoop::analyze(set<Value *> &parentIndVars) {
         if (phi->getNumOperands() != 2) {
             continue;
         }
-        LoopIndVar curIndVar{};
+        LoopIndVar curIndVar;
         // Calculate init value
-        int id4update = (phi->getIncomingBlock(1) == header);
-        curIndVar.initValue = phi->getOperand(!id4update);
+        int idForUpdate = (phi->getIncomingBlock(1) == header);
+        curIndVar.initValue = phi->getOperand(!idForUpdate);
         // Calculate delta
         curIndVar.delta =
             ASTVisitor([&](Value *v) {
                 return Constant::classof(v) ||
                        v == dyn_cast<Value>(instr);  // TODO: add loop invariant
-            }).visitValue(phi->getOperand(id4update));
+            }).visitValue(phi->getOperand(idForUpdate));
         if (curIndVar.delta->computable) {
             // TODO: Calculate final value
             indVars.push_back(curIndVar);
@@ -45,6 +45,7 @@ void MASFunction::analyzeLoop() {
     for (auto loop : rawLoops) {
         loops.push_back(new MASLoop(*loop));
         (*loops.rbegin())->analyze(indVars);
+        meta[&*loop->getLoopPreheader()->rbegin()].loop = *loops.rbegin();
     }
 }
 
@@ -52,6 +53,7 @@ void MASModule::analyze(Module &m) {
     functions.clear();
     for (auto &F : m) {
         if (!F.isDeclaration()) {
+            errs() << F.getName() << '\n';
             functions.push_back(new MASFunction(F));
         }
     }

@@ -16,9 +16,9 @@ class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
     bool debug;
 
 public:
-    explicit ASTVisitor(function_ref<bool(Value *)> leafChecker,
+    explicit ASTVisitor(function_ref<bool(Value *)> leafComputableChecker,
                         bool debug = false)
-        : leafChecker(leafChecker), debug(debug) {
+        : leafChecker(leafComputableChecker), debug(debug) {
     }
 
     ASTAbstractNode *visitValue(Value *v);

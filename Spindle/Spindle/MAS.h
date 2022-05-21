@@ -29,10 +29,18 @@ public:
     }
 
     void analyze(set<Value *> &parentIndVars);
+
+    auto &getIndVars() {
+        return indVars;
+    }
 };
 
 struct InstrMetaInfo {
     bool isGEPDependence;
+    MASLoop *loop;
+
+    InstrMetaInfo() : isGEPDependence(false), loop(nullptr) {
+    }
 };
 
 class MASFunction {

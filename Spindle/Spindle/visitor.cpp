@@ -77,7 +77,9 @@ ASTAbstractNode *ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
 void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     auto ptr = GEPI.getPointerOperand();
     if (indVars.find(ptr) == indVars.end()) {
-        visit(cast<Instruction>(ptr));
+        if (auto instr = dyn_cast<Instruction>(ptr)) {
+            visit(instr);
+        }
     }
     for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
          ++use) {
