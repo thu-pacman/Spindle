@@ -10,17 +10,17 @@ void MASLoop::analyze(set<Value *> &parentIndVars) {
             continue;
         }
         LoopIndVar curIndVar;
-        // Calculate init value
+        // calculate init value
         int idForUpdate = (phi->getIncomingBlock(1) == header);
         curIndVar.initValue = phi->getOperand(!idForUpdate);
-        // Calculate delta
+        // calculate delta
         curIndVar.delta =
             ASTVisitor([&](Value *v) {
                 return Constant::classof(v) ||
                        v == dyn_cast<Value>(instr);  // TODO: add loop invariant
             }).visitValue(phi->getOperand(idForUpdate));
         if (curIndVar.delta->computable) {
-            // TODO: Calculate final value
+            // TODO: calculate final value
             indVars.push_back(curIndVar);
             parentIndVars.insert(cast<Value>(phi));
         }
@@ -45,7 +45,10 @@ void MASFunction::analyzeLoop() {
     for (auto loop : rawLoops) {
         loops.push_back(new MASLoop(*loop));
         (*loops.rbegin())->analyze(indVars);
-        meta[&*loop->getHeader()->begin()].loop = *loops.rbegin();
+        instrMeta[&*loop->getHeader()->begin()].loop = *loops.rbegin();
+        for (auto &BB : loop->blocks()) {
+            bbMeta[BB].inLoop = true;
+        }
     }
 }
 

@@ -37,7 +37,6 @@ struct InstrMetaInfo;
 class GEPDependenceVisitor : public InstVisitor<GEPDependenceVisitor> {
     map<Instruction *, InstrMetaInfo> &meta;
     set<Value *> &indVars;
-    set<Instruction *> visited;
 
 public:
     explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,

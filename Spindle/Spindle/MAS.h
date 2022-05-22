@@ -33,11 +33,12 @@ public:
 };
 
 struct InstrMetaInfo {
-    bool isGEPDependence;
-    MASLoop *loop;
+    bool isGEPDependence = false;
+    MASLoop *loop = nullptr;
+};
 
-    InstrMetaInfo() : isGEPDependence(false), loop(nullptr) {
-    }
+struct BBMetaInfo {
+    bool needRecord = false, inLoop = false;
 };
 
 class MASFunction {
@@ -48,10 +49,11 @@ class MASFunction {
 public:
     Function &func;
     set<Value *> indVars;
-    map<Instruction *, InstrMetaInfo> meta;
+    map<Instruction *, InstrMetaInfo> instrMeta;
+    map<BasicBlock *, BBMetaInfo> bbMeta;
 
     explicit MASFunction(Function &func) : func(func) {
-        analyzeLoop();
+        analyzeLoop();  // now only find all loops
     }
 };
 
