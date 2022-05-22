@@ -91,6 +91,10 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
 }
 
 void GEPDependenceVisitor::visitInstruction(Instruction &I) {
+    if (visited.find(&I) != visited.end()) {
+        return;
+    }
+    visited.insert(&I);
     meta[&I].isGEPDependence = true;
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);

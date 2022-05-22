@@ -45,7 +45,7 @@ void MASFunction::analyzeLoop() {
     for (auto loop : rawLoops) {
         loops.push_back(new MASLoop(*loop));
         (*loops.rbegin())->analyze(indVars);
-        meta[&*loop->getLoopPreheader()->rbegin()].loop = *loops.rbegin();
+        meta[&*loop->getHeader()->begin()].loop = *loops.rbegin();
     }
 }
 
@@ -53,7 +53,6 @@ void MASModule::analyze(Module &m) {
     functions.clear();
     for (auto &F : m) {
         if (!F.isDeclaration()) {
-            errs() << F.getName() << '\n';
             functions.push_back(new MASFunction(F));
         }
     }

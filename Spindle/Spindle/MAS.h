@@ -22,17 +22,14 @@ class MASLoop {
     };
 
     Loop &loop;
-    vector<LoopIndVar> indVars;
 
 public:
+    vector<LoopIndVar> indVars;
+
     explicit MASLoop(Loop &loop) : loop(loop) {
     }
 
     void analyze(set<Value *> &parentIndVars);
-
-    auto &getIndVars() {
-        return indVars;
-    }
 };
 
 struct InstrMetaInfo {
@@ -44,28 +41,17 @@ struct InstrMetaInfo {
 };
 
 class MASFunction {
-    Function &func;
     vector<MASLoop *> loops;
-    set<Value *> indVars;
-    map<Instruction *, InstrMetaInfo> meta;
 
     void analyzeLoop();
 
 public:
+    Function &func;
+    set<Value *> indVars;
+    map<Instruction *, InstrMetaInfo> meta;
+
     explicit MASFunction(Function &func) : func(func) {
         analyzeLoop();
-    }
-
-    auto &getRawFunction() {
-        return func;
-    }
-
-    auto &getIndVarSet() {
-        return indVars;
-    }
-
-    auto &getMeta() {
-        return meta;
     }
 };
 

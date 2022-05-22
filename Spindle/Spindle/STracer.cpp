@@ -7,23 +7,22 @@ namespace llvm {
 void STracer::print() {
     errs() << "Static trace:\n";
     for (auto F : MAS.getFunctions()) {
-        auto &rawF = F->getRawFunction();
+        auto &rawF = F->func;
         errs() << " Function: " << rawF.getName() << "\n";
-        auto indVars = F->getIndVarSet();
-        auto meta = F->getMeta();
-        auto visitor = GEPDependenceVisitor(meta, indVars);
+        auto indVars = F->indVars;
+        auto meta = F->meta;
         for (auto &BB: rawF) {
             for (auto &I : BB) {
                 if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    visitor.visit(*GEPI);
+                    GEPDependenceVisitor(meta, indVars).visit(*GEPI);
                 }
             }
         }
         for (auto &BB : rawF) {
             for (auto &I : BB) {
                 if (auto loop = meta[&I].loop) {
-                    errs() << "  For loop:\n";
-                    for (auto &indVar : loop->getIndVars()) {
+                    errs() << "  For loop starts at " << I << '\n';
+                    for (auto &indVar : loop->indVars) {
                         errs() << "\tLoop IndVar start from "
                                << *indVar.initValue << ", step by ";
                         indVar.delta->print();
