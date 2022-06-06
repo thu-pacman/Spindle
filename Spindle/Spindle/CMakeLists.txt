@@ -5,7 +5,7 @@ add_library(SpindlePass MODULE
     visitor.cpp
     AST.cpp
     MAS.cpp
-    # ../../lib/sdetector_lib.c
+    ../../lib/stracer_lib.cpp
 )
 
 # Use C++11 to compile your pass (i.e., supply -std=c++11).

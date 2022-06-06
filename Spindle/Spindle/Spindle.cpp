@@ -1,4 +1,5 @@
 #include "STracer.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "visitor.h"
@@ -13,7 +14,31 @@ class SpindlePass : public PassInfoMixin<SpindlePass> {
 public:
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
         MAS.analyze(M);
-        STracer(MAS).print();
+        // STracer(MAS).print();
+        // Instrument for main function
+        if (auto main = M.getFunction("main")) {
+            // init main
+            {
+                IRBuilder builder(&*main->begin()->begin());
+                auto funcType =
+                    FunctionType::get(builder.getVoidTy(), {}, false);
+                auto initFunc =
+                    M.getOrInsertFunction("__spindle_init_main", funcType);
+                builder.CreateCall(initFunc);
+            }
+            // fini main
+            for (auto &BB : *main) {
+                if (auto ret = dyn_cast<ReturnInst>(BB.getTerminator())) {
+                    IRBuilder builder(&*ret);
+                    auto funcType =
+                        FunctionType::get(builder.getVoidTy(), {}, false);
+                    auto finiFunc =
+                        M.getOrInsertFunction("__spindle_fini_main", funcType);
+                    builder.CreateCall(finiFunc);
+                    break;
+                }
+            }
+        }
         return PreservedAnalyses::none();
     }
 };

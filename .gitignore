@@ -15,3 +15,4 @@ test/*
 *.so
 .cmake
 *.cbp
+*.o
