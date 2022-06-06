@@ -6,7 +6,7 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::print() {
+void STracer::run(const Instrumentation &instrument) {
     errs() << "Static trace:\n";
     for (auto F : MAS.getFunctions()) {
         errs() << " Function: " << F->func.getName() << "\n";
@@ -25,7 +25,7 @@ void STracer::print() {
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 if (dyn_cast<GetElementPtrInst>(&I) ||
-                    F->instrMeta[&I].isGEPDependence) {
+                    F->instrMeta[&I].isSTraceDependence) {
                     F->bbMeta[&BB].needRecord = true;
                     q.push(&BB);
                     break;
@@ -40,10 +40,14 @@ void STracer::print() {
                 }
             }
         }
-        int tot = 0, cnt = 0;
         for (auto &BB : F->func) {
-            ++tot;
-            cnt += F->bbMeta[&BB].needRecord;
+            if (!F->bbMeta[&BB].inLoop && F->bbMeta[&BB].needRecord) {
+                if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());
+                    BrI && BrI->isConditional()) {  // instrument for br
+                    F->instrMeta[BrI].isSTraceDependence = true;
+                    instrument.record_br(BrI);
+                }
+            }
         }
         // step 3: print static trace
         for (auto &BB : F->func) {
@@ -56,7 +60,7 @@ void STracer::print() {
                         indVar.delta->print();
                         errs() << '\n';
                     }
-                } else if (F->instrMeta[&I].isGEPDependence) {
+                } else if (F->instrMeta[&I].isSTraceDependence) {
                     errs() << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     errs() << *GEPI << "\n\tFormula: ";

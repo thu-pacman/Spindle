@@ -91,10 +91,10 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
 }
 
 void GEPDependenceVisitor::visitInstruction(Instruction &I) {
-    if (meta[&I].isGEPDependence) {
+    if (meta[&I].isSTraceDependence) {
         return;
     }
-    meta[&I].isGEPDependence = true;
+    meta[&I].isSTraceDependence = true;
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);
             def && indVars.find(cast<Value>(use)) == indVars.end()) {

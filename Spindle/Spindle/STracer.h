@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MAS.h"
+#include "instrument.h"
 
 using namespace llvm;
 using namespace std;
@@ -14,7 +15,7 @@ public:
     explicit STracer(MASModule &MAS) : MAS(MAS) {
     }
 
-    void print();
+    void run(const Instrumentation &instrument);
 };
 
 }  // namespace llvm

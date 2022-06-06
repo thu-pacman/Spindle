@@ -33,7 +33,7 @@ public:
 };
 
 struct InstrMetaInfo {
-    bool isGEPDependence = false;
+    bool isSTraceDependence = false;
     MASLoop *loop = nullptr;
 };
 
