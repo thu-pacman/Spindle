@@ -11,21 +11,29 @@ public:
     }
     void init_main(Instruction *I) const {
         IRBuilder builder(I);
-        auto funcType = FunctionType::get(builder.getVoidTy(), {}, false);
-        auto finiFunc = M.getOrInsertFunction("__spindle_init_main", funcType);
-        builder.CreateCall(finiFunc);
+        auto type = FunctionType::get(builder.getVoidTy(), {}, false);
+        auto func = M.getOrInsertFunction("__spindle_init_main", type);
+        builder.CreateCall(func);
     }
     void fini_main(Instruction *I) const {
         IRBuilder builder(I);
-        auto funcType = FunctionType::get(builder.getVoidTy(), {}, false);
-        auto finiFunc = M.getOrInsertFunction("__spindle_fini_main", funcType);
-        builder.CreateCall(finiFunc);
+        auto type = FunctionType::get(builder.getVoidTy(), {}, false);
+        auto func = M.getOrInsertFunction("__spindle_fini_main", type);
+        builder.CreateCall(func);
     };
     void record_br(BranchInst *I) const {
         IRBuilder builder(I);
-        auto funcType = FunctionType::get(
+        auto type = FunctionType::get(
             builder.getVoidTy(), {I->getCondition()->getType()}, false);
-        auto finiFunc = M.getOrInsertFunction("__spindle_record_br", funcType);
-        builder.CreateCall(finiFunc, {I->getCondition()});
+        auto func = M.getOrInsertFunction("__spindle_record_br", type);
+        builder.CreateCall(func, {I->getCondition()});
+    }
+    void record_value(Instruction *I) const {
+        IRBuilder builder(I);
+        auto value = cast<Value>(I);
+        auto type =
+            FunctionType::get(builder.getVoidTy(), {value->getType()}, false);
+        auto func = M.getOrInsertFunction("__spindle_record_br", type);
+        builder.CreateCall(func, {value});
     }
 };

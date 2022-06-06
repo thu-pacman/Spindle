@@ -7,9 +7,10 @@ using namespace llvm;
 namespace llvm {
 
 void STracer::run(const Instrumentation &instrument) {
-    errs() << "Static trace:\n";
+    std::error_code ec;
+    raw_fd_ostream strace("strace.log", ec);
     for (auto F : MAS.getFunctions()) {
-        errs() << " Function: " << F->func.getName() << "\n";
+        strace << "Function: " << F->func.getName() << "\n";
         // step 1: find GEP dependencies
         auto visitor = GEPDependenceVisitor(F->instrMeta, F->indVars);
         for (auto &BB : F->func) {
@@ -53,28 +54,29 @@ void STracer::run(const Instrumentation &instrument) {
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 if (auto loop = F->instrMeta[&I].loop) {
-                    errs() << "  For loop starts at " << I << '\n';
+                    strace << "  For loop starts at " << I << '\n';
                     for (auto &indVar : loop->indVars) {
-                        errs() << "\tLoop IndVar start from "
+                        strace << "\tLoop IndVar start from "
                                << *indVar.initValue << ", step by ";
-                        indVar.delta->print();
-                        errs() << '\n';
+                        indVar.delta->print(strace);
+                        strace << '\n';
                     }
                 } else if (F->instrMeta[&I].isSTraceDependence) {
-                    errs() << I << '\n';
+                    strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    errs() << *GEPI << "\n\tFormula: ";
+                    strace << *GEPI << "\n\tFormula: ";
                     auto *formula =
                         ASTVisitor([&](Value *v) {
                             return Constant::classof(v) ||
                                    F->indVars.find(v) != F->indVars.end();
                         }).visit(GEPI);
-                    formula->print();
-                    errs() << '\n';
+                    formula->print(strace);
+                    strace << '\n';
                 }
             }
         }
     }
+    errs() << "Static trace has been dumped into strace.log.\n";
 }
 
 }  // namespace llvm

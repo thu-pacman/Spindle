@@ -2,16 +2,16 @@
 
 ASTAbstractNode *NIL = new ASTAbstractNode;
 
-void ASTAbstractNode::print() {}
+void ASTAbstractNode::print(raw_fd_ostream &out) {}
 
-void ASTOpNode::print() {
-    errs() << "( " << opCode << ' ';
-    lc->print();
-    errs() << ", ";
-    rc->print();
-    errs() << ')';
+void ASTOpNode::print(raw_fd_ostream &out) {
+    out << "( " << opCode << ' ';
+    lc->print(out);
+    out << ", ";
+    rc->print(out);
+    out << ')';
 }
 
-void ASTLeafNode::print()  {
-    errs() << '(' << *v << ')';
+void ASTLeafNode::print(raw_fd_ostream &out)  {
+    out << '(' << *v << ')';
 }
