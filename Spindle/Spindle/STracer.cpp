@@ -72,6 +72,7 @@ void STracer::run(const Instrumentation &instrument) {
                         }).visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
+                    instrument.record_value(GEPI);  // naive instrumentation
                 }
             }
         }

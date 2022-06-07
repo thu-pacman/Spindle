@@ -29,11 +29,11 @@ public:
         builder.CreateCall(func, {I->getCondition()});
     }
     void record_value(Instruction *I) const {
-        IRBuilder builder(I);
+        IRBuilder builder(I->getNextNode());
         auto value = cast<Value>(I);
         auto type =
             FunctionType::get(builder.getVoidTy(), {value->getType()}, false);
-        auto func = M.getOrInsertFunction("__spindle_record_br", type);
+        auto func = M.getOrInsertFunction("__spindle_record_value", type);
         builder.CreateCall(func, {value});
     }
 };
