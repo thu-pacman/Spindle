@@ -5,6 +5,7 @@ using namespace llvm;
 
 class Instrumentation {
     Module &M;
+    set<Instruction *> valueRecorded;
 
 public:
     explicit Instrumentation(Module &M) : M(M) {
@@ -28,7 +29,11 @@ public:
         auto func = M.getOrInsertFunction("__spindle_record_br", type);
         builder.CreateCall(func, {I->getCondition()});
     }
-    void record_value(Instruction *I) const {
+    void record_value(Instruction *I) {
+        if (valueRecorded.count(I)) {
+            return;
+        }
+        valueRecorded.insert(I);
         IRBuilder builder(I->getNextNode());
         auto value = cast<Value>(I);
         auto type =

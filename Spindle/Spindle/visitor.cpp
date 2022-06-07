@@ -5,10 +5,11 @@ ASTAbstractNode *ASTVisitor::visitValue(Value *v) {
         return visit(&(*I));
     } else {
         if (debug) {
-            errs() << "Visiting leaf value" << *v << '\n';
+            errs() << "Visiting leaf value " << *v << '\n';
         }
-        auto *ret = new ASTLeafNode;
+        auto ret = new ASTLeafNode;
         ret->v = v, ret->computable = leafChecker(v);
+        // FIXME: maybe move leafChecker to the top
         return ret;
     }
 }
@@ -17,7 +18,7 @@ ASTAbstractNode *ASTVisitor::visitInstruction(Instruction &I) {
     if (debug) {
         errs() << "Visiting other instruction" << I << '\n';
     }
-    auto *ret = new ASTLeafNode;
+    auto ret = new ASTLeafNode;
     ret->v = &I, ret->computable = leafChecker(cast<Value>(&I));
     return ret;
 }
@@ -33,7 +34,7 @@ ASTAbstractNode *ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI) {
         return visitValue(UI.getOperand(0));
         // TODO: add case for UnaryOperator
     default:
-        auto *ret = new ASTLeafNode;
+        auto ret = new ASTLeafNode;
         ret->v = &UI, ret->computable = false;
         return ret;
     }
@@ -43,7 +44,7 @@ ASTAbstractNode *ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) {
     if (debug) {
         errs() << "Visiting binary operator instruction" << BOI << '\n';
     }
-    auto *ret = new ASTOpNode;
+    auto ret = new ASTOpNode;
     ret->opCode = BOI.getOpcode();
     ret->lc = visitValue(BOI.getOperand(0));
     ret->rc = visitValue(BOI.getOperand(1));
@@ -58,13 +59,9 @@ ASTAbstractNode *ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     auto ptr = GEPI.getPointerOperand();
     ASTAbstractNode *ret;
     ret = visitValue(ptr);
-    /*
-    auto *base = new ASTLeafNode;
-    base->v = ptr, base->computable = true;
-    ret = base; */
     for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
          ++use) {
-        auto *next = new ASTOpNode;
+        auto next = new ASTOpNode;
         next->lc = ret;
         next->rc = visitValue(use->get());
         next->opCode = Instruction::Add;

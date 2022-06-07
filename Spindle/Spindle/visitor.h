@@ -20,15 +20,10 @@ public:
                         bool debug = false)
         : leafChecker(leafComputableChecker), debug(debug) {
     }
-
     ASTAbstractNode *visitValue(Value *v);
-
     ASTAbstractNode *visitInstruction(Instruction &I);
-
     ASTAbstractNode *visitUnaryInstruction(UnaryInstruction &UI);
-
     ASTAbstractNode *visitBinaryOperator(BinaryOperator &BOI);
-
     ASTAbstractNode *visitGetElementPtrInst(GetElementPtrInst &GEPI);
 };
 
@@ -43,8 +38,6 @@ public:
                                   set<Value *> &indVars)
         : meta(meta), indVars(indVars) {
     }
-
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
-
     void visitInstruction(Instruction &I);
 };

@@ -15,6 +15,8 @@ using std::map;
 using std::set;
 using std::vector;
 
+class MASFunction;
+
 class MASLoop {
     struct LoopIndVar {
         Value *initValue, *finalValue;
@@ -22,14 +24,36 @@ class MASLoop {
     };
 
     Loop &loop;
+    MASFunction *parent;
+    SmallVector<Loop *> loops;
 
 public:
     vector<LoopIndVar> indVars;
 
-    explicit MASLoop(Loop &loop) : loop(loop) {
+    MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
+        // find all sub loops
+        loops = {&loop};
+        for (unsigned i = 0; i < loops.size(); ++i) {
+            for (auto subLoop : loops[i]->getSubLoops()) {
+                loops.push_back(subLoop);
+            }
+        }
     }
-
-    void analyze(set<Value *> &parentIndVars);
+    bool isLoopInvariant(Value *v) const {
+        if (Constant::classof(v) || Argument::classof(v)) {
+            return true;
+        }
+        if (auto def = dyn_cast<Instruction>(v)) {
+            for (auto L : loops) {
+                if (L->contains(def)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
+    };
+    bool analyze();
 };
 
 struct InstrMetaInfo {
@@ -38,12 +62,11 @@ struct InstrMetaInfo {
 };
 
 struct BBMetaInfo {
-    bool needRecord = false, inLoop = false;
+    bool needRecord = false, inMASLoop = false;
 };
 
 class MASFunction {
-    vector<MASLoop *> loops;
-
+    LoopInfo LI;
     void analyzeLoop();
 
 public:
@@ -58,12 +81,8 @@ public:
 };
 
 class MASModule {
+public:
     vector<MASFunction *> functions;
 
-public:
     void analyze(Module &m);
-
-    vector<MASFunction *> &getFunctions() {
-        return functions;
-    }
 };

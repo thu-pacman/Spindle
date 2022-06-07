@@ -2,8 +2,9 @@
 
 #include <llvm/Passes/PassBuilder.h>
 
-void MASLoop::analyze(set<Value *> &parentIndVars) {
+bool MASLoop::analyze() {
     auto header = loop.getHeader();
+    bool ret = false;
     for (auto instr = header->begin(); auto phi = dyn_cast<PHINode>(&(*instr));
          ++instr) {
         if (phi->getNumOperands() != 2) {
@@ -11,27 +12,41 @@ void MASLoop::analyze(set<Value *> &parentIndVars) {
         }
         LoopIndVar curIndVar;
         // calculate init value
-        int idForUpdate = (phi->getIncomingBlock(1) == header);
+        bool idForUpdate = (phi->getIncomingBlock(1) == header);
         curIndVar.initValue = phi->getOperand(!idForUpdate);
         // calculate delta
         curIndVar.delta =
             ASTVisitor([&](Value *v) {
-                return Constant::classof(v) ||
-                       v == dyn_cast<Value>(instr);  // TODO: add loop invariant
+                return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
             }).visitValue(phi->getOperand(idForUpdate));
         if (curIndVar.delta->computable) {
-            // TODO: calculate final value
-            indVars.push_back(curIndVar);
-            parentIndVars.insert(cast<Value>(phi));
+            // check and calculate final value
+            auto brI = cast<BranchInst>(
+                phi->getIncomingBlock(idForUpdate)->getTerminator());
+            if (brI->isConditional()) {
+                if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
+                    bool idForIndVar =
+                        (icmpI->getOperand(1) == phi->getOperand(idForUpdate));
+                    if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
+                            .visitValue(icmpI->getOperand(!idForIndVar))
+                            ->computable) {
+                        curIndVar.finalValue = phi->getOperand(!idForUpdate);
+                        indVars.push_back(curIndVar);
+                        parent->indVars.insert(cast<Value>(phi));
+                        ret = true;
+                    }
+                }
+            }
         }
     }
+    return ret;
 }
 
 void MASFunction::analyzeLoop() {
     PassBuilder PB;
     FunctionAnalysisManager FAM;
     PB.registerFunctionAnalyses(FAM);
-    LoopInfo &LI = FAM.getResult<LoopAnalysis>(func);
+    LI.analyze(FAM.getResult<DominatorTreeAnalysis>(func));
     // traverse all rawLoops
     vector<Loop *> rawLoops;
     for (auto loop : LI) {
@@ -43,11 +58,17 @@ void MASFunction::analyzeLoop() {
         }
     }
     for (auto loop : rawLoops) {
-        loops.push_back(new MASLoop(*loop));
-        (*loops.rbegin())->analyze(indVars);
-        instrMeta[&*loop->getHeader()->begin()].loop = *loops.rbegin();
-        for (auto &BB : loop->blocks()) {
-            bbMeta[BB].inLoop = true;
+        auto masLoop = new MASLoop(*loop, this);
+        if (masLoop->analyze()) {
+            instrMeta[&loop->getHeader()->front()].loop = masLoop;
+            for (auto BB : loop->blocks()) {
+                bbMeta[BB].inMASLoop = true;
+                for (auto &I : *BB) {
+                    instrMeta[&I].loop = masLoop;
+                }
+            }
+        } else {
+            delete masLoop;
         }
     }
 }

@@ -6,18 +6,19 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(const Instrumentation &instrument) {
+void STracer::run(Instrumentation &instrument) {
     std::error_code ec;
     raw_fd_ostream strace("strace.log", ec);
-    for (auto F : MAS.getFunctions()) {
+    int tot = 0, cnt = 0;
+    for (auto F : MAS.functions) {
         strace << "Function: " << F->func.getName() << "\n";
         // step 1: find GEP dependencies
-        auto visitor = GEPDependenceVisitor(F->instrMeta, F->indVars);
+        auto depVisitor = GEPDependenceVisitor(F->instrMeta, F->indVars);
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 // TODO: Nesting GEP in other instructions
                 if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    visitor.visit(*GEPI);
+                    depVisitor.visit(*GEPI);
                 }
             }
         }
@@ -42,7 +43,7 @@ void STracer::run(const Instrumentation &instrument) {
             }
         }
         for (auto &BB : F->func) {
-            if (!F->bbMeta[&BB].inLoop && F->bbMeta[&BB].needRecord) {
+            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord) {
                 if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());
                     BrI && BrI->isConditional()) {  // instrument for br
                     F->instrMeta[BrI].isSTraceDependence = true;
@@ -53,9 +54,18 @@ void STracer::run(const Instrumentation &instrument) {
         // step 3: print static trace
         for (auto &BB : F->func) {
             for (auto &I : BB) {
-                if (auto loop = F->instrMeta[&I].loop) {
+                auto loop = F->instrMeta[&I].loop;
+                if (loop && isa<PHINode>(I)) {
                     strace << "  For loop starts at " << I << '\n';
                     for (auto &indVar : loop->indVars) {
+                        if (auto def =
+                                dyn_cast<Instruction>(indVar.initValue)) {
+                            instrument.record_value(def);
+                        }
+                        if (auto def =
+                                dyn_cast<Instruction>(indVar.finalValue)) {
+                            instrument.record_value(def);
+                        }
                         strace << "\tLoop IndVar start from "
                                << *indVar.initValue << ", step by ";
                         indVar.delta->print(strace);
@@ -65,18 +75,31 @@ void STracer::run(const Instrumentation &instrument) {
                     strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     strace << *GEPI << "\n\tFormula: ";
-                    auto *formula =
-                        ASTVisitor([&](Value *v) {
-                            return Constant::classof(v) ||
-                                   F->indVars.find(v) != F->indVars.end();
-                        }).visit(GEPI);
+                    auto visitor = loop ? ASTVisitor([&](Value *v) {
+                        return loop->isLoopInvariant(v);
+                    })
+                                        : ASTVisitor([](Value *v) {
+                                              return Constant::classof(v) ||
+                                                     Argument::classof(v);
+                                          });
+                    auto formula = visitor.visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
-                    instrument.record_value(GEPI);  // naive instrumentation
+                    ++tot;
+                    cnt += formula->computable;
+                    /*
+                    if (!formula->computable) {
+                        formula->print(errs());
+                        errs() << '\n';
+                    }*/
+                    if (!formula->computable) {
+                        instrument.record_value(GEPI);
+                    }
                 }
             }
         }
     }
+    errs() << "Computable memory accesses: " << cnt << '/' << tot << '\n';
     errs() << "Static trace has been dumped into strace.log.\n";
 }
 
