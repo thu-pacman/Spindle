@@ -85,8 +85,10 @@ void STracer::run(Instrumentation &instrument) {
                     auto formula = visitor.visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
-                    ++tot;
-                    cnt += formula->computable;
+                    if (loop) {
+                        ++tot;
+                        cnt += formula->computable;
+                    }
                     /*
                     if (!formula->computable && loop) {
                         errs() << *GEPI << '\n';
@@ -95,12 +97,12 @@ void STracer::run(Instrumentation &instrument) {
                     }*/
                     if (!formula->computable) {
                         instrument.record_value(GEPI);
-                    }
+                    }  // TODO: instrument for loop invariants
                 }
             }
         }
     }
-    errs() << "Computable memory accesses: " << cnt << '/' << tot << '\n';
+    errs() << "Computable memory accesses in loops: " << cnt << '/' << tot << '\n';
     errs() << "Static trace has been dumped into strace.log.\n";
 }
 

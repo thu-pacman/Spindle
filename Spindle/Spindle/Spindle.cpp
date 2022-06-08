@@ -16,7 +16,7 @@ public:
         MAS.analyze(M);
         Instrumentation instrument(M);
         STracer(MAS).run(instrument);
-        // Instrument for main function
+        // instrument for main function
         if (auto main = M.getFunction("main")) {
             // init main
             instrument.init_main(&main->getEntryBlock().front());

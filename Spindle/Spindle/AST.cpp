@@ -2,8 +2,6 @@
 
 #include "llvm/IR/Instruction.h"
 
-ASTAbstractNode *NIL = new ASTAbstractNode;
-
 void ASTAbstractNode::print(raw_fd_ostream &out) {
 }
 

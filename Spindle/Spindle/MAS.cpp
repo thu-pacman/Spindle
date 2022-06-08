@@ -85,9 +85,9 @@ void MASFunction::analyzeLoop() {
     }
 }
 
-void MASModule::analyze(Module &m) {
+void MASModule::analyze(Module &M) {
     functions.clear();
-    for (auto &F : m) {
+    for (auto &F : M) {
         if (!F.isDeclaration()) {
             functions.push_back(new MASFunction(F));
         }

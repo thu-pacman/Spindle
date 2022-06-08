@@ -19,5 +19,3 @@ struct ASTLeafNode : public ASTAbstractNode {
     Value *v;
     void print(raw_fd_ostream &out) override;
 };
-
-extern ASTAbstractNode *NIL;
