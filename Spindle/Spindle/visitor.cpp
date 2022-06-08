@@ -1,15 +1,16 @@
 #include "visitor.h"
 
 ASTAbstractNode *ASTVisitor::visitValue(Value *v) {
-    if (auto I = dyn_cast<Instruction>(v)) {
-        return visit(&(*I));
+    bool res = leafChecker(v);
+    auto I = dyn_cast<Instruction>(v);
+    if (!res && I) {
+        return visit(I);
     } else {
         if (debug) {
-            errs() << "Visiting leaf value " << *v << '\n';
+            errs() << "Visiting leaf value " << *v << ' ' << leafChecker(v) << '\n';
         }
         auto ret = new ASTLeafNode;
-        ret->v = v, ret->computable = leafChecker(v);
-        // FIXME: maybe move leafChecker to the top
+        ret->v = v, ret->computable = res ? res : leafChecker(v);
         return ret;
     }
 }

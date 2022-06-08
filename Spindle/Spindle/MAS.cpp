@@ -2,6 +2,18 @@
 
 #include <llvm/Passes/PassBuilder.h>
 
+bool MASLoop::isLoopInvariant(Value *v) const {
+    if (Constant::classof(v) || Argument::classof(v)) {
+        return true;
+    }
+    if (auto def = dyn_cast<Instruction>(v)) {
+        return std::all_of(loops.begin(), loops.end(), [&](Loop *L) {
+            return !L->contains(def);
+        });
+    }
+    return false;
+}
+
 bool MASLoop::analyze() {
     auto header = loop.getHeader();
     bool ret = false;

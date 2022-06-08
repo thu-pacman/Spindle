@@ -28,7 +28,7 @@ class MASLoop {
     SmallVector<Loop *> loops;
 
 public:
-    vector<LoopIndVar> indVars;
+    SmallVector<LoopIndVar> indVars;
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
         // find all sub loops
@@ -39,20 +39,7 @@ public:
             }
         }
     }
-    bool isLoopInvariant(Value *v) const {
-        if (Constant::classof(v) || Argument::classof(v)) {
-            return true;
-        }
-        if (auto def = dyn_cast<Instruction>(v)) {
-            for (auto L : loops) {
-                if (L->contains(def)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    };
+    bool isLoopInvariant(Value *v) const;
     bool analyze();
 };
 

@@ -76,7 +76,7 @@ void STracer::run(Instrumentation &instrument) {
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     strace << *GEPI << "\n\tFormula: ";
                     auto visitor = loop ? ASTVisitor([&](Value *v) {
-                        return loop->isLoopInvariant(v);
+                        return loop->isLoopInvariant(v) || F->indVars.count(v);
                     })
                                         : ASTVisitor([](Value *v) {
                                               return Constant::classof(v) ||
@@ -88,7 +88,8 @@ void STracer::run(Instrumentation &instrument) {
                     ++tot;
                     cnt += formula->computable;
                     /*
-                    if (!formula->computable) {
+                    if (!formula->computable && loop) {
+                        errs() << *GEPI << '\n';
                         formula->print(errs());
                         errs() << '\n';
                     }*/
