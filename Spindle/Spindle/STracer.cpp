@@ -55,7 +55,7 @@ void STracer::run(Instrumentation &instrument) {
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 auto loop = F->instrMeta[&I].loop;
-                if (loop && isa<PHINode>(I)) {
+                if (loop && isa<PHINode>(I)) {  // TODO: add loop end position
                     strace << "  For loop starts at " << I << '\n';
                     for (auto &indVar : loop->indVars) {
                         if (auto def =
@@ -66,8 +66,9 @@ void STracer::run(Instrumentation &instrument) {
                                 dyn_cast<Instruction>(indVar.finalValue)) {
                             instrument.record_value(def);
                         }
-                        strace << "\tLoop IndVar start from "
-                               << *indVar.initValue << ", step by ";
+                        strace << "\tLoop IndVar starts from "
+                               << *indVar.initValue << ", ends at "
+                               << *indVar.finalValue << ", steps by ";
                         indVar.delta->print(strace);
                         strace << '\n';
                     }
@@ -102,7 +103,8 @@ void STracer::run(Instrumentation &instrument) {
             }
         }
     }
-    errs() << "Computable memory accesses in loops: " << cnt << '/' << tot << '\n';
+    errs() << "Computable memory accesses in loops: " << cnt << '/' << tot
+           << '\n';
     errs() << "Static trace has been dumped into strace.log.\n";
 }
 

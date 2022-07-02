@@ -42,7 +42,7 @@ bool MASLoop::analyze() {
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(icmpI->getOperand(!idForIndVar))
                             ->computable) {
-                        curIndVar.finalValue = phi->getOperand(!idForUpdate);
+                        curIndVar.finalValue = icmpI->getOperand(!idForIndVar);
                         indVars.push_back(curIndVar);
                         parent->indVars.insert(cast<Value>(phi));
                         ret = true;
