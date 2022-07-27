@@ -1,15 +1,8 @@
-add_library(SpindlePass MODULE
-    # List your source files here.
-    Spindle.cpp
-    STracer.cpp
-    visitor.cpp
-    AST.cpp
-    MAS.cpp
-    ../../lib/stracer_lib.cpp
-)
+file(GLOB SPINDLE_PASS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
-# Use C++11 to compile your pass (i.e., supply -std=c++11).
-target_compile_features(SpindlePass PRIVATE cxx_range_for cxx_auto_type)
+add_llvm_library(SpindlePass MODULE ${SPINDLE_PASS_SOURCES})
+
+target_include_directories(SpindlePass PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # LLVM is (typically) built with no C++ RTTI. We need to match that;
 # otherwise, we'll get linker errors about missing RTTI data.
