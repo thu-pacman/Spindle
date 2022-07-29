@@ -8,7 +8,7 @@ using namespace llvm;
 
 namespace {
 
-class SpindlePass : public PassInfoMixin<SpindlePass> {
+class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
 
 public:
@@ -51,8 +51,8 @@ llvmGetPassPluginInfo() {
         LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1", [](PassBuilder &PB) {
             PB.registerPipelineParsingCallback(
                 [](StringRef PassName, ModulePassManager &MPM, ...) {
-                    if (PassName == "spindle") {
-                        MPM.addPass(SpindlePass());
+                    if (PassName == "stracer") {
+                        MPM.addPass(STracerPass());
                         return true;
                     }
                     return false;

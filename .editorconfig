@@ -1,0 +1,21 @@
+root = true
+
+[*]
+indent_style = tab
+tab_width = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{json,tex,html,xml,css}]
+tab_width = 2
+
+[*.{json,yaml,yml,md,py,pxd,pyi,pyx}]
+indent_style = space
+
+[*.{json,yaml,yml,md}]
+indent_size = 2
+
+[*.{py,pxd,pyi,pyx}]
+indent_size = 4
