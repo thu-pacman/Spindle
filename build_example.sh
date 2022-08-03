@@ -8,6 +8,6 @@ example_opt_bc="${cmake_folder}/${example_name}_opt.bc"
 
 mkdir -p "${cmake_folder}/examples"
 
-clang -emit-llvm -O2 -c -o "${example_bc}" "${example_name}.c"
+clang -emit-llvm -O2 -c -o "${example_bc}" "${example_name}.c" -fno-unroll-loops -fno-vectorize
 opt -load-pass-plugin="${cmake_folder}/SpindlePass/SpindlePass.so" -passes="${2}" -o "${example_opt_bc}" "${example_bc}"
 clang -O2 -o "${cmake_folder}/${example_name}" "${example_opt_bc}" "lib/${4:-${2}}.cpp"
