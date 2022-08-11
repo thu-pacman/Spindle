@@ -18,13 +18,19 @@ for example
 
 ## Run test:
 ```shell
-./build_example.sh $<desired toolchain name> $<pass name> $<example name in ./examples>
+./build_example.sh $<desired toolchain name> $<pass name> $<example name in ./examples> $<clang optimisation level>
 ```
 
 for example
 
 ```shell
-./build_example.sh ubuntu stracer test_loop_out_of_bound
+./build_example.sh ubuntu SpindlePass stracer loop_unsafe 0
+```
+
+or more commonly
+
+```shell
+./build_example.sh ubuntu SpindlePass stracer loop_unsafe 2 -fno-unroll-loops -fno-vectorize
 ```
 
 Notes that to simplify the work in the current status, the source files under `./examples` are all considered written in C (due to the fixed suffix, `.c`, is used in the script). It can be extended to support arbitrary language (which, however, must be supported by LLVM) in the future in case of necessity.
