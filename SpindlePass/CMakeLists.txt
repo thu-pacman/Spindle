@@ -1,6 +1,6 @@
 file(GLOB SPINDLE_PASS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
-add_llvm_library(SpindlePass MODULE ${SPINDLE_PASS_SOURCES})
+add_llvm_pass_plugin(SpindlePass ${SPINDLE_PASS_SOURCES})
 
 target_include_directories(SpindlePass PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 

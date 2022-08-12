@@ -45,8 +45,8 @@ public:
 
 }  // End of anonymous namespace.
 
-extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
-llvmGetPassPluginInfo() {
+llvm::PassPluginLibraryInfo getSpindlePassPluginInfo()
+{
     return {
         LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1", [](PassBuilder &PB) {
             PB.registerPipelineParsingCallback(
@@ -58,4 +58,10 @@ llvmGetPassPluginInfo() {
                     return false;
                 });
         }};
+}
+
+extern "C" LLVM_ATTRIBUTE_WEAK
+::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo()
+{
+	return getSpindlePassPluginInfo();
 }
