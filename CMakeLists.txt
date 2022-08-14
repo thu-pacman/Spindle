@@ -18,4 +18,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if (NOT LLVM_ENABLE_RTTI)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
+endif ()
+
+add_llvm_pass_plugin(Spindle spindle/entry.cpp)
+target_link_libraries(Spindle PRIVATE "$<$<PLATFORM_ID:Darwin>:-undefined dynamic_lookup>")
+
+target_include_directories(Spindle PRIVATE
+	include
+
+	detector
+	tracer
+)
+
 add_subdirectory(SpindlePass)
