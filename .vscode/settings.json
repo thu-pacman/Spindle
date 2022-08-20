@@ -1,0 +1,14 @@
+{
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.generator": "Ninja",
+  "C_Cpp.autoAddFileAssociations": false,
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.cppStandard": "c++20",
+  "C_Cpp.default.includePath": [
+    "/usr/include",
+    "/usr/local/include",
+    "${workspaceFolder}/detector",
+    "${workspaceFolder}/include",
+    "${workspaceFolder}/tracer"
+  ]
+}
