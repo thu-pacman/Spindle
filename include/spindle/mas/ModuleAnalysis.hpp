@@ -5,6 +5,7 @@
 #include <llvm/IR/PassManager.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include "./internals/macros.hpp"
 #include "./Module.hpp"
 
 namespace spindle::mas
@@ -21,7 +22,7 @@ struct ModuleAnalysis : llvm::AnalysisInfoMixin<ModuleAnalysis>
 
 	Result run(llvm::Module& M, llvm::ModuleAnalysisManager& MAM)
 	{
-		llvm::outs() << "MAS analysis run\n";
+		SPINDLE_FORMAT_STDOUT("MAS analysis run");
 		return M;
 	}
 private:

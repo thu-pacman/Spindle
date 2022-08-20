@@ -5,6 +5,7 @@
 #include <llvm/IR/PassManager.h>
 #include <llvm/Support/raw_ostream.h>
 
+#include "spindle/mas/internals/macros.hpp"
 #include "spindle/mas/ModuleAnalysis.hpp"
 
 namespace spindle::mas
@@ -16,7 +17,7 @@ struct DetectorPass : public llvm::PassInfoMixin<DetectorPass>
 
 	llvm::PreservedAnalyses run(llvm::Module& M, llvm::ModuleAnalysisManager& MAM)
 	{
-		llvm::outs() << "detector run\n";
+		SPINDLE_FORMAT_STDOUT("detector run");
 		MAM.getResult<mas::ModuleAnalysis>(M);
 		return llvm::PreservedAnalyses::all();
 	}

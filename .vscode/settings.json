@@ -5,6 +5,7 @@
   "C_Cpp.default.cStandard": "c17",
   "C_Cpp.default.cppStandard": "c++20",
   "C_Cpp.default.includePath": [
+    "${workspaceFolder}/third_party/fmt/include",
     "/usr/include",
     "/usr/local/include",
     "${workspaceFolder}/detector",
