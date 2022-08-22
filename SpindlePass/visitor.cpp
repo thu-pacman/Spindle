@@ -32,6 +32,7 @@ ASTAbstractNode *ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI) {
     // ignore trivial cast
     case Instruction::SExt:
     case Instruction::ZExt:
+    case Instruction::Load:
         return visitValue(UI.getOperand(0));
         // TODO: add case for UnaryOperator
     default:

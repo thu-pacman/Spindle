@@ -72,6 +72,9 @@ void STracer::run(Instrumentation &instrument) {
                         indVar.delta->print(strace);
                         strace << '\n';
                     }
+                    if (auto endPosition = loop->getEndPosition()) {
+                        strace << "  For loop ends at " << *endPosition << '\n';
+                    }
                 } else if (F->instrMeta[&I].isSTraceDependence) {
                     strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {

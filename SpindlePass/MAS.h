@@ -40,6 +40,7 @@ public:
         }
     }
     bool isLoopInvariant(Value *v) const;
+    Instruction* getEndPosition() const;
     bool analyze();
 };
 
