@@ -34,7 +34,10 @@ public:
             return;
         }
         valueRecorded.insert(I);
-        IRBuilder builder(I->getNextNode());
+        auto c = I->getNextNode();
+        while (c != nullptr && isa<PHINode>(c))
+            c = c->getNextNode();
+        IRBuilder builder(c);
         auto value = cast<Value>(I);
         auto type =
             FunctionType::get(builder.getVoidTy(), {value->getType()}, false);
