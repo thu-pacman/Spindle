@@ -2,6 +2,7 @@
 
 #include <map>
 #include <set>
+#include <functional>
 
 #include "AST.h"
 #include "MAS.h"
@@ -10,13 +11,14 @@
 using namespace llvm;
 using std::map;
 using std::set;
+using std::function;
 
 class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
-    function_ref<bool(Value *)> leafChecker;
+    function<bool(Value *)> leafChecker;
     bool debug;
 
 public:
-    explicit ASTVisitor(function_ref<bool(Value *)> leafComputableChecker,
+    explicit ASTVisitor(function<bool(Value *)> leafComputableChecker,
                         bool debug = false)
         : leafChecker(leafComputableChecker), debug(debug) {
     }
