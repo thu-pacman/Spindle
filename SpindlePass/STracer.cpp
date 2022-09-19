@@ -72,6 +72,9 @@ void STracer::run(Instrumentation &instrument) {
                         indVar.delta->print(strace);
                         strace << '\n';
                     }
+                    if (auto endPosition = loop->getEndPosition()) {
+                        strace << "  For loop ends at " << *endPosition << '\n';
+                    }
                 } else if (F->instrMeta[&I].isSTraceDependence) {
                     strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
@@ -86,6 +89,48 @@ void STracer::run(Instrumentation &instrument) {
                     auto formula = visitor.visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
+                    auto FirstElement = GEPI->getOperand(0);
+                    auto TypeOfFirstElement =
+                        FirstElement->getType();  //->getPointerElementType();
+                    // Ignore the first value
+                    for (int i = 2; i < GEPI->getNumOperands(); i++) {
+                        auto Ptrtype =
+                            dyn_cast<PointerType>(TypeOfFirstElement);
+                        auto Curoperand = GEPI->getOperand(i);
+                        if (Ptrtype) {
+                            auto TypeOfPtr = Ptrtype->getPointerElementType();
+                            if (auto SType = dyn_cast<StructType>(TypeOfPtr)) {
+                                strace << "       Getting (" << *Curoperand
+                                       << ") of Struct type " << *TypeOfPtr
+                                       << ":";
+                                if (auto CI =
+                                        dyn_cast<ConstantInt>(Curoperand)) {
+                                    strace << *(SType->getTypeAtIndex(
+                                                  CI->getLimitedValue()))
+                                           << "\n";
+                                    TypeOfFirstElement = (SType->getTypeAtIndex(
+                                        CI->getLimitedValue()));
+                                } else {
+                                    strace << "Cannot calculate:Operand Not "
+                                              "Constant\n";
+                                    break;
+                                }
+                            } else if (auto AType =
+                                           dyn_cast<ArrayType>(TypeOfPtr)) {
+                                strace << "       Getting (" << *Curoperand
+                                       << ") value of Arraytype " << *TypeOfPtr
+                                       << "\n";
+                                TypeOfFirstElement = AType->getElementType();
+                            } else {
+                                strace << "Cannot Analyze the type\n";
+                            }
+                        } else {
+                            strace << "Not a Pointer halfway\n";
+                            break;
+                        }
+                        TypeOfFirstElement =
+                            PointerType::getUnqual(TypeOfFirstElement);
+                    }
                     if (loop) {
                         ++tot;
                         cnt += formula->computable;

@@ -17,6 +17,14 @@ bool MASLoop::isLoopInvariant(Value *v) const {
 
 bool MASLoop::analyze() {
     auto header = loop.getHeader();
+    auto preheader = loop.getLoopPreheader();
+    auto latch = loop.getLoopLatch();
+    auto exitBB = loop.getExitBlock();
+    if (!preheader || !latch || !exitBB) {
+        errs() << "Not a Loop in Canonical Form\n";
+        return false;
+    }
+
     bool ret = false;
     for (auto instr = header->begin(); auto phi = dyn_cast<PHINode>(&(*instr));
          ++instr) {
@@ -25,21 +33,21 @@ bool MASLoop::analyze() {
         }
         LoopIndVar curIndVar;
         // calculate init value
-        bool idForUpdate = (phi->getIncomingBlock(1) == header);
-        curIndVar.initValue = phi->getOperand(!idForUpdate);
+        bool idForLatch = (phi->getIncomingBlock(1) == latch);
+        curIndVar.initValue = phi->getOperand(!idForLatch);
         // calculate delta
         curIndVar.delta =
             ASTVisitor([&](Value *v) {
                 return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
-            }).visitValue(phi->getOperand(idForUpdate));
+            }).visitValue(phi->getOperand(idForLatch));
         if (curIndVar.delta->computable) {
             // check and calculate final value
-            auto brI = cast<BranchInst>(
-                phi->getIncomingBlock(idForUpdate)->getTerminator());
-            if (brI->isConditional()) {
+            if (auto brI = cast<BranchInst>(latch->getTerminator());
+                brI->isConditional()) {
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
-                        (icmpI->getOperand(1) == phi->getOperand(idForUpdate));
+                        (icmpI->getOperand(1) == phi->getOperand(idForLatch));
+
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(icmpI->getOperand(!idForIndVar))
                             ->computable) {
@@ -53,6 +61,13 @@ bool MASLoop::analyze() {
         }
     }
     return ret;
+}
+Instruction *MASLoop::getEndPosition() const {
+    if (!loop.getExitBlock()) {
+        errs() << "Multiple Exit Blocks\n";
+        return nullptr;
+    }
+    return &loop.getExitBlock()->front();
 }
 
 void MASFunction::analyzeLoop() {
