@@ -1,6 +1,7 @@
 #include "MAS.h"
 
 #include <llvm/Passes/PassBuilder.h>
+#include <llvm/IR/Dominators.h>
 
 bool MASLoop::isLoopInvariant(Value *v) const {
     if (Constant::classof(v) || Argument::classof(v)) {
