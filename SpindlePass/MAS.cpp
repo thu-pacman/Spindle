@@ -1,9 +1,9 @@
 #include "MAS.h"
 
-#include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/Dominators.h>
+#include <llvm/Passes/PassBuilder.h>
 
-bool MASLoop::isLoopInvariant(Value *v) const {
+auto MASLoop::isLoopInvariant(Value *v) const -> bool {
     if (Constant::classof(v) || Argument::classof(v)) {
         return true;
     }
@@ -15,16 +15,14 @@ bool MASLoop::isLoopInvariant(Value *v) const {
     return false;
 }
 
-bool MASLoop::analyze() {
+auto MASLoop::analyze() -> bool {
     auto header = loop.getHeader();
     auto preheader = loop.getLoopPreheader();
     auto latch = loop.getLoopLatch();
     auto exitBB = loop.getExitBlock();
-    if (!preheader || !latch || !exitBB) {
-        errs() << "Not a Loop in Canonical Form\n";
+    if (!preheader || !latch || !exitBB) {  // not a canonical form
         return false;
     }
-
     bool ret = false;
     for (auto instr = header->begin(); auto phi = dyn_cast<PHINode>(&(*instr));
          ++instr) {
@@ -47,7 +45,6 @@ bool MASLoop::analyze() {
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
                         (icmpI->getOperand(1) == phi->getOperand(idForLatch));
-
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(icmpI->getOperand(!idForIndVar))
                             ->computable) {
@@ -62,9 +59,9 @@ bool MASLoop::analyze() {
     }
     return ret;
 }
-Instruction *MASLoop::getEndPosition() const {
-    if (!loop.getExitBlock()) {
-        errs() << "Multiple Exit Blocks\n";
+
+auto MASLoop::getEndPosition() const -> Instruction * {
+    if (!loop.getExitBlock()) {  // multiple exit blocks
         return nullptr;
     }
     return &loop.getExitBlock()->front();

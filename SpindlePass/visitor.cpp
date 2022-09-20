@@ -1,13 +1,14 @@
 #include "visitor.h"
 
-ASTAbstractNode *ASTVisitor::visitValue(Value *v) {
+auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     bool res = leafChecker(v);
     auto I = dyn_cast<Instruction>(v);
     if (!res && I) {
         return visit(I);
     } else {
         if (debug) {
-            errs() << "Visiting leaf value " << *v << ' ' << leafChecker(v) << '\n';
+            errs() << "Visiting leaf value " << *v << ' ' << leafChecker(v)
+                   << '\n';
         }
         auto ret = new ASTLeafNode;
         ret->v = v, ret->computable = res ? res : leafChecker(v);
@@ -15,16 +16,18 @@ ASTAbstractNode *ASTVisitor::visitValue(Value *v) {
     }
 }
 
-ASTAbstractNode *ASTVisitor::visitInstruction(Instruction &I) {
+auto ASTVisitor::visitInstruction(Instruction &I) -> ASTAbstractNode * {
     if (debug) {
-        errs() << "Visiting other instruction" << I << '\n';
+        errs() << "Visiting other instruction" << I << ' '
+               << leafChecker(cast<Value>(&I)) << '\n';
     }
     auto ret = new ASTLeafNode;
     ret->v = &I, ret->computable = leafChecker(cast<Value>(&I));
     return ret;
 }
 
-ASTAbstractNode *ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI) {
+auto ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI)
+    -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting unary instruction" << UI << '\n';
     }
@@ -32,17 +35,25 @@ ASTAbstractNode *ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI) {
     // ignore trivial cast
     case Instruction::SExt:
     case Instruction::ZExt:
+    case Instruction::Trunc:
+    case Instruction::FPToSI:
     case Instruction::Load:
+        // FIXME: Actually `load` should not be a unary operator. Here `load` is
+        // for conveniently checking loop invariants. Consider using
+        // Loop::isLoopInvariant instead.
         return visitValue(UI.getOperand(0));
         // TODO: add case for UnaryOperator
     default:
         auto ret = new ASTLeafNode;
         ret->v = &UI, ret->computable = false;
+        if (debug) {
+            errs() << "0\n";
+        }
         return ret;
     }
 }
 
-ASTAbstractNode *ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) {
+auto ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting binary operator instruction" << BOI << '\n';
     }
@@ -54,7 +65,8 @@ ASTAbstractNode *ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) {
     return ret;
 }
 
-ASTAbstractNode *ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
+    -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting GEP" << GEPI << '\n';
     }

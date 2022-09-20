@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <functional>
+#include <utility>
 
 #include "AST.h"
 #include "MAS.h"
@@ -20,13 +21,13 @@ class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
 public:
     explicit ASTVisitor(function<bool(Value *)> leafComputableChecker,
                         bool debug = false)
-        : leafChecker(leafComputableChecker), debug(debug) {
+        : leafChecker(std::move(leafComputableChecker)), debug(debug) {
     }
-    ASTAbstractNode *visitValue(Value *v);
-    ASTAbstractNode *visitInstruction(Instruction &I);
-    ASTAbstractNode *visitUnaryInstruction(UnaryInstruction &UI);
-    ASTAbstractNode *visitBinaryOperator(BinaryOperator &BOI);
-    ASTAbstractNode *visitGetElementPtrInst(GetElementPtrInst &GEPI);
+    auto visitValue(Value *v) -> ASTAbstractNode *;
+    auto visitInstruction(Instruction &I) -> ASTAbstractNode *;
+    auto visitUnaryInstruction(UnaryInstruction &UI) -> ASTAbstractNode *;
+    auto visitBinaryOperator(BinaryOperator &BOI) -> ASTAbstractNode *;
+    auto visitGetElementPtrInst(GetElementPtrInst &GEPI) -> ASTAbstractNode *;
 };
 
 struct InstrMetaInfo;

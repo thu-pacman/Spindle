@@ -39,9 +39,9 @@ public:
             }
         }
     }
-    bool isLoopInvariant(Value *v) const;
-    Instruction* getEndPosition() const;
-    bool analyze();
+    auto isLoopInvariant(Value *v) const -> bool;
+    [[nodiscard]] auto getEndPosition() const -> Instruction*;
+    auto analyze() -> bool;
 };
 
 struct InstrMetaInfo {

@@ -55,7 +55,7 @@ void STracer::run(Instrumentation &instrument) {
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 auto loop = F->instrMeta[&I].loop;
-                if (loop && isa<PHINode>(I)) {  // TODO: add loop end position
+                if (loop && isa<PHINode>(I)) {
                     strace << "  For loop starts at " << I << '\n';
                     for (auto &indVar : loop->indVars) {
                         if (auto def =
@@ -89,47 +89,47 @@ void STracer::run(Instrumentation &instrument) {
                     auto formula = visitor.visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
-                    auto FirstElement = GEPI->getOperand(0);
-                    auto TypeOfFirstElement =
-                        FirstElement->getType();  //->getPointerElementType();
+                    // TODO: below code is for struct access, merge to
+                    // GEPDependenceVisitor or move to a new function
+                    auto typeOfFirstElement = GEPI->getOperand(0)->getType();
                     // Ignore the first value
                     for (int i = 2; i < GEPI->getNumOperands(); i++) {
-                        auto Ptrtype =
-                            dyn_cast<PointerType>(TypeOfFirstElement);
-                        auto Curoperand = GEPI->getOperand(i);
-                        if (Ptrtype) {
-                            auto TypeOfPtr = Ptrtype->getPointerElementType();
-                            if (auto SType = dyn_cast<StructType>(TypeOfPtr)) {
-                                strace << "       Getting (" << *Curoperand
-                                       << ") of Struct type " << *TypeOfPtr
+                        auto ptrType =
+                            dyn_cast<PointerType>(typeOfFirstElement);
+                        auto curOperand = GEPI->getOperand(i);
+                        if (ptrType) {
+                            auto typeOfPtr = ptrType->getPointerElementType();
+                            if (auto structType =
+                                    dyn_cast<StructType>(typeOfPtr)) {
+                                strace << "       Getting (" << *curOperand
+                                       << ") of Struct type " << *typeOfPtr
                                        << ":";
                                 if (auto CI =
-                                        dyn_cast<ConstantInt>(Curoperand)) {
-                                    strace << *(SType->getTypeAtIndex(
-                                                  CI->getLimitedValue()))
-                                           << "\n";
-                                    TypeOfFirstElement = (SType->getTypeAtIndex(
-                                        CI->getLimitedValue()));
+                                        dyn_cast<ConstantInt>(curOperand)) {
+                                    typeOfFirstElement =
+                                        (structType->getTypeAtIndex(
+                                            CI->getLimitedValue()));
+                                    strace << *typeOfFirstElement << "\n";
                                 } else {
-                                    strace << "Cannot calculate:Operand Not "
-                                              "Constant\n";
+                                    strace << "Cannot calculate: non-constant"
+                                              "operand\n";
                                     break;
                                 }
                             } else if (auto AType =
-                                           dyn_cast<ArrayType>(TypeOfPtr)) {
-                                strace << "       Getting (" << *Curoperand
-                                       << ") value of Arraytype " << *TypeOfPtr
+                                           dyn_cast<ArrayType>(typeOfPtr)) {
+                                strace << "       Getting (" << *curOperand
+                                       << ") value of ArrayType " << *typeOfPtr
                                        << "\n";
-                                TypeOfFirstElement = AType->getElementType();
+                                typeOfFirstElement = AType->getElementType();
                             } else {
-                                strace << "Cannot Analyze the type\n";
+                                strace << "Cannot analyze the type\n";
                             }
                         } else {
-                            strace << "Not a Pointer halfway\n";
+                            strace << "Not a pointer halfway\n";
                             break;
                         }
-                        TypeOfFirstElement =
-                            PointerType::getUnqual(TypeOfFirstElement);
+                        typeOfFirstElement =
+                            PointerType::getUnqual(typeOfFirstElement);
                     }
                     if (loop) {
                         ++tot;
