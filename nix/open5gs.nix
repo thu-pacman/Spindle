@@ -128,6 +128,8 @@ llvmPackages.stdenv.mkDerivation rec {
           systemd.packages = [ pkgs.open5gs ];
           systemd.services = lib.genAttrs services (_: {
             wantedBy = [ "multi-user.target" ];
+            after = [ "mongodb.service" ];
+            serviceConfig.AmbientCapabilities = [ "CAP_NET_ADMIN" ];
           });
         };
         testScript = lib.flip lib.concatMapStrings services (service: ''
