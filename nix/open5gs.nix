@@ -18,6 +18,7 @@
 , openssl
 , gnutls
 , lksctp-tools
+, coreutils
 }:
 
 llvmPackages.stdenv.mkDerivation rec {
@@ -51,7 +52,8 @@ llvmPackages.stdenv.mkDerivation rec {
   ];
 
   NIX_CFLAGS_COMPILE = [
-    "-Wno-error"
+    "-Wno-compound-token-split-by-macro"
+    "-Wno-format"
   ];
 
   mesonFlags = [
@@ -81,4 +83,11 @@ llvmPackages.stdenv.mkDerivation rec {
     gnutls
     lksctp-tools
   ];
+
+  postInstall = ''
+    for file in configs/systemd/*.service; do
+      substituteInPlace $file --replace /bin/kill ${coreutils}/bin/kill
+      install -Dm644 $file $out/lib/systemd/system/$(basename $file)
+    done
+  '';
 }
