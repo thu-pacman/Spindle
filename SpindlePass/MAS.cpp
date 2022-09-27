@@ -1,8 +1,9 @@
 #include "MAS.h"
 
+#include <llvm/IR/Dominators.h>
 #include <llvm/Passes/PassBuilder.h>
 
-bool MASLoop::isLoopInvariant(Value *v) const {
+auto MASLoop::isLoopInvariant(Value *v) const -> bool {
     if (Constant::classof(v) || Argument::classof(v)) {
         return true;
     }
@@ -14,8 +15,14 @@ bool MASLoop::isLoopInvariant(Value *v) const {
     return false;
 }
 
-bool MASLoop::analyze() {
+auto MASLoop::analyze() -> bool {
     auto header = loop.getHeader();
+    auto preheader = loop.getLoopPreheader();
+    auto latch = loop.getLoopLatch();
+    auto exitBB = loop.getExitBlock();
+    if (!preheader || !latch || !exitBB) {  // not a canonical form
+        return false;
+    }
     bool ret = false;
     for (auto instr = header->begin(); auto phi = dyn_cast<PHINode>(&(*instr));
          ++instr) {
@@ -24,21 +31,20 @@ bool MASLoop::analyze() {
         }
         LoopIndVar curIndVar;
         // calculate init value
-        bool idForUpdate = (phi->getIncomingBlock(1) == header);
-        curIndVar.initValue = phi->getOperand(!idForUpdate);
+        bool idForLatch = (phi->getIncomingBlock(1) == latch);
+        curIndVar.initValue = phi->getOperand(!idForLatch);
         // calculate delta
         curIndVar.delta =
             ASTVisitor([&](Value *v) {
                 return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
-            }).visitValue(phi->getOperand(idForUpdate));
+            }).visitValue(phi->getOperand(idForLatch));
         if (curIndVar.delta->computable) {
             // check and calculate final value
-            auto brI = cast<BranchInst>(
-                phi->getIncomingBlock(idForUpdate)->getTerminator());
-            if (brI->isConditional()) {
+            if (auto brI = cast<BranchInst>(latch->getTerminator());
+                brI->isConditional()) {
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
-                        (icmpI->getOperand(1) == phi->getOperand(idForUpdate));
+                        (icmpI->getOperand(1) == phi->getOperand(idForLatch));
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(icmpI->getOperand(!idForIndVar))
                             ->computable) {
@@ -52,6 +58,13 @@ bool MASLoop::analyze() {
         }
     }
     return ret;
+}
+
+auto MASLoop::getEndPosition() const -> Instruction * {
+    if (!loop.getExitBlock()) {  // multiple exit blocks
+        return nullptr;
+    }
+    return &loop.getExitBlock()->front();
 }
 
 void MASFunction::analyzeLoop() {
