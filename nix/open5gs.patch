@@ -1,0 +1,15 @@
+diff --git a/meson.build b/meson.build
+index 84670367e..8c36e2312 100644
+--- a/meson.build
++++ b/meson.build
+@@ -48,10 +48,6 @@ if clangtidy.found() != true
+     clangtidy = find_program('clang-tidy', required: false)
+ endif
+ 
+-
+-meson.add_install_script(python3_exe, '-c',
+-        mkdir_p.format(join_paths(localstatedir, 'log', 'open5gs')))
+-
+ # Compiler flags
+ if cc.get_id() == 'gcc' or cc.get_id() == 'clang'
+     possible_cc_flags = [
