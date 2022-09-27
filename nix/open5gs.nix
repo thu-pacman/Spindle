@@ -1,4 +1,5 @@
-{ llvmPackages
+{ lib
+, llvmPackages
 , fetchFromGitHub
 , meson
 , ninja
@@ -19,6 +20,7 @@
 , gnutls
 , lksctp-tools
 , coreutils
+, nixosTest
 }:
 
 llvmPackages.stdenv.mkDerivation rec {
@@ -90,4 +92,47 @@ llvmPackages.stdenv.mkDerivation rec {
       install -Dm644 $file $out/lib/systemd/system/$(basename $file)
     done
   '';
+
+  passthru.tests =
+    let
+      services = [
+        "open5gs-amfd"
+        "open5gs-ausfd"
+        "open5gs-bsfd"
+        "open5gs-hssd"
+        "open5gs-mmed"
+        "open5gs-nrfd"
+        "open5gs-nssfd"
+        "open5gs-pcfd"
+        "open5gs-pcrfd"
+        "open5gs-sgwcd"
+        "open5gs-sgwud"
+        "open5gs-smfd"
+        "open5gs-udmd"
+        "open5gs-udrd"
+        "open5gs-upfd"
+      ];
+    in
+    {
+      basic = nixosTest {
+        nodes.machine = { config, pkgs, lib, ... }: {
+          services.mongodb.enable = true;
+          users.users.open5gs = {
+            isSystemUser = true;
+            group = "open5gs";
+          };
+          users.groups.open5gs = { };
+          systemd.tmpfiles.rules = [
+            "d /var/log/open5gs 0755 open5gs open5gs - -"
+          ];
+          systemd.packages = [ pkgs.open5gs ];
+          systemd.services = lib.genAttrs services (_: {
+            wantedBy = [ "multi-user.target" ];
+          });
+        };
+        testScript = lib.flip lib.concatMapStrings services (service: ''
+          machine.wait_for_unit("${service}.service")
+        '');
+      };
+    };
 }

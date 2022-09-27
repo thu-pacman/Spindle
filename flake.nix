@@ -2,13 +2,25 @@
   inputs = {
     nixpkgs.url = "github:NickCao/nixpkgs/nixos-unstable-small";
   };
-  outputs = { self, nixpkgs, ... }: with nixpkgs.legacyPackages.x86_64-linux; {
-    devShells.x86_64-linux.default = mkShell {
-      nativeBuildInputs = [ cmake ninja llvmPackages_14.clang gdb ];
-      buildInputs = [ llvmPackages_14.llvm ];
+  outputs = { self, nixpkgs, ... }:
+    let
+      pkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [ self.overlays.default ];
+      };
+    in
+    {
+      overlays.default = super: self: {
+        open5gs = super.callPackage ./nix/open5gs.nix {
+          llvmPackages = super.llvmPackages_14;
+        };
+      };
+      packages.x86_64-linux = {
+        inherit (pkgs) open5gs;
+      };
+      devShells.x86_64-linux.default = with pkgs; mkShell {
+        nativeBuildInputs = [ cmake ninja llvmPackages_14.clang gdb ];
+        buildInputs = [ llvmPackages_14.llvm ];
+      };
     };
-    packages.x86_64-linux.open5gs = callPackage ./nix/open5gs.nix {
-      llvmPackages = llvmPackages_14;
-    };
-  };
 }
