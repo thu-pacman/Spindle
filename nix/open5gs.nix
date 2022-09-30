@@ -20,6 +20,7 @@
 , gnutls
 , lksctp-tools
 , coreutils
+, Spindle
 , nixosTest
 }:
 
@@ -56,6 +57,9 @@ llvmPackages.stdenv.mkDerivation rec {
   NIX_CFLAGS_COMPILE = [
     "-Wno-compound-token-split-by-macro"
     "-Wno-format"
+    "-Wno-unused-command-line-argument"
+    "-fpass-plugin=${Spindle}/lib/SpindlePass.so"
+    "-lstracer"
   ];
 
   mesonFlags = [
@@ -84,6 +88,7 @@ llvmPackages.stdenv.mkDerivation rec {
     openssl
     gnutls
     lksctp-tools
+    Spindle
   ];
 
   postInstall = ''
@@ -115,6 +120,7 @@ llvmPackages.stdenv.mkDerivation rec {
     in
     {
       basic = nixosTest {
+        name = pname;
         nodes.machine = { config, pkgs, lib, ... }: {
           services.mongodb.enable = true;
           users.users.open5gs = {

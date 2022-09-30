@@ -12,7 +12,7 @@ void __spindle_init_main() {
 void __spindle_fini_main() {
     fputs("]\n", fp);
     fclose(fp);
-    puts("[STracer] Dynamic trace has been collected to `dtrace.json`.");
+    // puts("[STracer] Dynamic trace has been collected to `dtrace.json`.");
 }
 
 void __spindle_record_br(bool cond) {
