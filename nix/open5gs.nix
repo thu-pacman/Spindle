@@ -96,7 +96,10 @@ llvmPackages.stdenv.mkDerivation rec {
       substituteInPlace $file --replace /bin/kill ${coreutils}/bin/kill
       install -Dm644 $file $out/lib/systemd/system/$(basename $file)
     done
+	install -Dm644 strace.log "$strace/strace.log"
   '';
+
+  outputs = [ "out" "strace" ];
 
   passthru.tests =
     let

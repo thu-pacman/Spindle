@@ -1,4 +1,5 @@
 #include "STracer.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <queue>
 
@@ -8,7 +9,8 @@ namespace llvm {
 
 void STracer::run(Instrumentation &instrument) {
     std::error_code ec;
-    raw_fd_ostream strace("strace.log", ec);
+    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
+    strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
         strace << "Function: " << F->func.getName() << "\n";
