@@ -173,4 +173,4 @@ $RECYCLE.BIN/
 /cmake-build-*
 *.log
 /.direnv
-/result
+/result*
