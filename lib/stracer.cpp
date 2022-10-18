@@ -5,7 +5,7 @@ FILE *fp;
 extern "C" {
 
 void __spindle_init_main() {
-    fp = fopen("dtrace.json", "w");
+    fp = stderr;
     fputs("[\n", fp);
 }
 
