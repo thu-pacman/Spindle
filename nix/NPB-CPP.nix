@@ -23,26 +23,31 @@ in
 llvmPackages.stdenv.mkDerivation rec {
   pname = "NPB-CPP";
   version = "1.0";
+
   src = fetchFromGitHub {
     owner = "GMAP";
     repo = pname;
     rev = "v${version}";
     hash = "sha256-ALkD0Qr4meoIQZd1jtEirm9QsXZGi3YTEkbzGdqVFKI=";
   };
+
   sourceRoot = "source/NPB-SER";
+
   outputs = [ "out" "strace" ];
+
   buildInputs = [ Spindle ];
+
   postConfigure = ''
     ln -sf ${config} config/make.def
   '';
+
   makeFlags = [
     benchmark
     "CLASS=${class}"
   ];
+
   installPhase = let name = lib.strings.toLower benchmark; in ''
     install -Dm755 ./bin/${name}.${class}    $out/bin/${name}.${class}
     install -Dm644 ./${benchmark}/strace.log $strace/strace.log
   '';
-  NIX_CFLAGS_COMPILE = [
-  ];
 }
