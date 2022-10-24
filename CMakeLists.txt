@@ -19,3 +19,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(SpindlePass)
+
+add_library(stracer SHARED lib/stracer.cpp)
+install(TARGETS stracer)

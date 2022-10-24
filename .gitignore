@@ -172,3 +172,5 @@ $RECYCLE.BIN/
 /.idea
 /cmake-build-*
 *.log
+/.direnv
+/result*

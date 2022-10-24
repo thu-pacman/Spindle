@@ -10,6 +10,9 @@ class Instrumentation {
 public:
     explicit Instrumentation(Module &M) : M(M) {
     }
+    StringRef getName() const {
+        return M.getName();
+    }
     void init_main(Instruction *I) const {
         IRBuilder builder(I);
         auto type = FunctionType::get(builder.getVoidTy(), {}, false);

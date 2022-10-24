@@ -49,13 +49,10 @@ llvm::PassPluginLibraryInfo getSpindlePassPluginInfo()
 {
     return {
         LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1", [](PassBuilder &PB) {
-            PB.registerPipelineParsingCallback(
-                [](StringRef PassName, ModulePassManager &MPM, ...) {
-                    if (PassName == "stracer") {
-                        MPM.addPass(STracerPass());
-                        return true;
-                    }
-                    return false;
+            PB.registerOptimizerLastEPCallback(
+                [](ModulePassManager &MPM, ...) {
+                    MPM.addPass(STracerPass());
+                    return true;
                 });
         }};
 }
