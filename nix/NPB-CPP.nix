@@ -3,8 +3,6 @@
 , writeText
 , fetchFromGitHub
 , Spindle
-, benchmark ? "MG"
-, class ? "C"
 }:
 let
   config = writeText "config" ''
@@ -15,7 +13,7 @@ let
     CFLAGS     = -O3 -mcmodel=medium -fpass-plugin=${Spindle}/lib/SpindlePass.so -fno-unroll-loops -fno-vectorize
     CLINKFLAGS = -O3 -mcmodel=medium
     UCC        = $(CC)
-    BINDIR     = ../bin
+    BINDIR     = $(out)/bin
     RAND       = randdp
     WTIME      = wtime.cpp
   '';
@@ -41,13 +39,13 @@ llvmPackages.stdenv.mkDerivation rec {
     ln -sf ${config} config/make.def
   '';
 
-  makeFlags = [
-    benchmark
-    "CLASS=${class}"
-  ];
-
-  installPhase = let name = lib.strings.toLower benchmark; in ''
-    install -Dm755 ./bin/${name}.${class}    $out/bin/${name}.${class}
-    install -Dm644 ./${benchmark}/strace.log $strace/strace.log
+  buildPhase = ''
+    mkdir -p "$out/bin" "$strace"
+    for workload in BT CG EP FT IS LU MG SP; do
+      make "$workload" CLASS=C 2> "$strace/$workload.log"
+      install -Dm644 "$workload/strace.log" "$strace/$workload.strace"
+    done
   '';
+
+  dontInstall = true;
 }
