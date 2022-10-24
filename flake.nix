@@ -17,6 +17,9 @@
         UERANSIM = super.callPackage ./nix/UERANSIM.nix {
           llvmPackages = super.llvmPackages_14;
         };
+        NPB-CPP = super.callPackage ./nix/NPB-CPP.nix {
+          llvmPackages = super.llvmPackages_14;
+        };
         Spindle = with super; llvmPackages_14.stdenv.mkDerivation {
           name = "Spindle";
           src = ./.;
@@ -25,7 +28,7 @@
         };
       };
       packages.x86_64-linux = {
-        inherit (pkgs) Spindle open5gs UERANSIM;
+        inherit (pkgs) Spindle open5gs UERANSIM NPB-CPP;
       };
       devShells.x86_64-linux.default = with pkgs; mkShell {
         nativeBuildInputs = [ cmake ninja llvmPackages_14.clang gdb ];
