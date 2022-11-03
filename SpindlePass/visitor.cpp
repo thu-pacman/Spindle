@@ -1,8 +1,11 @@
 #include "visitor.h"
+#include <iostream>
+#include "utils.h"
 
 auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     bool res = leafChecker(v);
     auto I = dyn_cast<Instruction>(v);
+    std::cout << "is_leaf: " << res << ", is_instr: " << (I != nullptr) << std::endl;
     if (!res && I) {
         return visit(I);
     } else {
@@ -11,8 +14,8 @@ auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
                    << '\n';
         }
         auto ret = new ASTLeafNode;
-        ret->v = v, ret->computable = res ? res : leafChecker(v);
-        return ret;
+        ret->v = v, ret->computable = res ? res : leafChecker(v);       // what's the fuck ??? 
+        return ret;                                                     // what is the case res == false && I == nullptr ???
     }
 }
 
@@ -73,7 +76,7 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     auto ptr = GEPI.getPointerOperand();
     ASTAbstractNode *ret;
     ret = visitValue(ptr);
-    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
+    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();      // how to compute memory address ???
          ++use) {
         auto next = new ASTOpNode;
         next->lc = ret;
@@ -86,8 +89,10 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
 }
 
 void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+    std::cout << "GEP: " << Print(&GEPI) << std::endl;
     auto ptr = GEPI.getPointerOperand();
-    if (indVars.find(ptr) == indVars.end()) {
+    std::cout << "ptr: " << Print(ptr) << std::endl;
+    if (indVars.find(ptr) == indVars.end()) {                               // not loopVars
         if (auto instr = dyn_cast<Instruction>(ptr)) {
             visit(instr);
         }
@@ -95,20 +100,21 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
          ++use) {
         if (auto def = dyn_cast<Instruction>(use);
-            def && indVars.find(cast<Value>(use)) == indVars.end()) {
+            def && indVars.find(cast<Value>(use)) == indVars.end()) {       // not loopVars
             visit(def);
         }
     }
 }
 
 void GEPDependenceVisitor::visitInstruction(Instruction &I) {
+    std::cout << "GEP_NORMAL: " << Print(&I) << std::endl;
     if (meta[&I].isSTraceDependence) {
         return;
     }
-    meta[&I].isSTraceDependence = true;
+    meta[&I].isSTraceDependence = true;                 // in MDT(Memory Dependency Tree)
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);
-            def && indVars.find(cast<Value>(use)) == indVars.end()) {
+            def && indVars.find(cast<Value>(use)) == indVars.end()) {       // not loopVars, Why ???
             visit(def);
         }
     }

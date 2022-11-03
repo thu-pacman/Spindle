@@ -25,10 +25,10 @@ class MASLoop {
 
     Loop &loop;
     MASFunction *parent;
-    SmallVector<Loop *> loops;
+    SmallVector<Loop *> loops;              // the loop's all subloops
 
 public:
-    SmallVector<LoopIndVar> indVars;
+    SmallVector<LoopIndVar> indVars;        // computable loops
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
         // find all sub loops
@@ -59,7 +59,7 @@ class MASFunction {
 
 public:
     Function &func;
-    set<Value *> indVars;
+    set<Value *> indVars;                           // loopVars
     map<Instruction *, InstrMetaInfo> instrMeta;
     map<BasicBlock *, BBMetaInfo> bbMeta;
 

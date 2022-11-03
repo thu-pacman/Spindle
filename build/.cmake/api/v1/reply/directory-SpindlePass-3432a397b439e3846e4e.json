@@ -1,0 +1,60 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"add_llvm_library",
+			"add_llvm_pass_plugin"
+		],
+		"files" : 
+		[
+			"/home/yhy/.local/llvm/build/lib/cmake/llvm/AddLLVM.cmake",
+			"SpindlePass/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1011,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 839,
+				"parent" : 2
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 3,
+			"component" : "SpindlePass",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"SpindlePass/SpindlePass.so"
+			],
+			"targetId" : "SpindlePass::@843e98495d80c1342e6b",
+			"targetIndex" : 0,
+			"type" : "target"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "SpindlePass",
+		"source" : "SpindlePass"
+	}
+}

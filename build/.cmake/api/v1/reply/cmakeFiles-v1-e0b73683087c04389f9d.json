@@ -1,0 +1,273 @@
+{
+	"inputs" : 
+	[
+		{
+			"path" : "CMakeLists.txt"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/CMakeFiles/3.21.4/CMakeSystem.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeSystemSpecificInitialize.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/CMakeFiles/3.21.4/CMakeCXXCompiler.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/CMakeFiles/3.21.4/CMakeCCompiler.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeSystemSpecificInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeGenericSystem.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeInitializeConfigs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/Linux.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/UnixPaths.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeCXXInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeLanguageInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Compiler/GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Compiler/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Compiler/CMakeCommonCompilerMacros.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/Linux-GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeCommonLanguageInclude.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeCInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeLanguageInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Compiler/GNU-C.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Compiler/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/Linux-GNU-C.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Platform/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeCommonLanguageInclude.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMConfig.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/FindTerminfo.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakePushCheckState.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CheckCSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/Internal/CheckSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindZLIB.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/SelectLibraryConfigurations.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindLibXml2.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPkgConfig.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMExports.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMBuildTreeOnlyTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/llvm/cmake/modules/LLVM-Config.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/AddLLVM.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/GNUInstallDirs.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMDistributionSupport.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVMProcessSources.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/AddFileDependencies.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/spack/spack/opt/spack/linux-debian11-cascadelake/gcc-10.2.1/cmake-3.21.4-34yvhceuepuavuisa5i4fzvo5tz53bjs/share/cmake-3.21/Modules/CMakeParseArguments.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/LLVM-Config.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/yhy/.local/llvm/build/lib/cmake/llvm/DetermineGCCCompatible.cmake"
+		},
+		{
+			"path" : "SpindlePass/CMakeLists.txt"
+		}
+	],
+	"kind" : "cmakeFiles",
+	"paths" : 
+	{
+		"build" : "/home/yhy/instruction_lite/Spindle/build",
+		"source" : "/home/yhy/instruction_lite/Spindle"
+	},
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

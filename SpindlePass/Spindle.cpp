@@ -12,7 +12,7 @@ class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
 
 public:
-    PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {
+    PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {      // entrance !!!
         MAS.analyze(M);
         Instrumentation instrument(M);
         STracer(MAS).run(instrument);
@@ -31,7 +31,7 @@ public:
                     for (auto &I : BB) {
                         if (auto CallI = dyn_cast<CallInst>(&I)) {
                             auto func = CallI->getCalledFunction();
-                            if (func && func->getName().equals("exit")) {
+                            if (func && func->getName().equals("exit")) {           // may call exit()
                                 instrument.fini_main(CallI);
                             }
                         }

@@ -7,9 +7,10 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(Instrumentation &instrument) {
+void STracer::run(Instrumentation &instrument) {        // Static Trace
     std::error_code ec;
-    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
+    // raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
+    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
     strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
@@ -36,7 +37,7 @@ void STracer::run(Instrumentation &instrument) {
                 }
             }
         }
-        for (; !q.empty(); q.pop()) {
+        for (; !q.empty(); q.pop()) {                   // all the needed-record BB's succeeding BBs need to be recorded
             for (auto BB : successors(q.front())) {
                 if (!F->bbMeta[BB].needRecord) {
                     F->bbMeta[BB].needRecord = true;
@@ -45,8 +46,8 @@ void STracer::run(Instrumentation &instrument) {
             }
         }
         for (auto &BB : F->func) {
-            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord) {
-                if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());
+            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord) {       // all needed-record but not-in-loop BBs'
+                if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());        // branches are in MDT
                     BrI && BrI->isConditional()) {  // instrument for br
                     F->instrMeta[BrI].isSTraceDependence = true;
                     instrument.record_br(BrI);
@@ -74,7 +75,7 @@ void STracer::run(Instrumentation &instrument) {
                         indVar.delta->print(strace);
                         strace << '\n';
                     }
-                    if (auto endPosition = loop->getEndPosition()) {
+                    if (auto endPosition = loop->getEndPosition()) {                // the first instr of exitBB
                         strace << "  For loop ends at " << *endPosition << '\n';
                     }
                 } else if (F->instrMeta[&I].isSTraceDependence) {
@@ -91,6 +92,8 @@ void STracer::run(Instrumentation &instrument) {
                     auto formula = visitor.visit(GEPI);
                     formula->print(strace);
                     strace << '\n';
+
+                    // analyze `GEP` layer by layer
                     // TODO: below code is for struct access, merge to
                     // GEPDependenceVisitor or move to a new function
                     auto typeOfFirstElement = GEPI->getOperand(0)->getType();
