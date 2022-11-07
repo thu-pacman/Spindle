@@ -21,9 +21,21 @@ llvmPackages.stdenv.mkDerivation {
     ninja
   ];
 
-  NIX_CFLAGS_COMPILE = [
-    "-Wno-reserved-user-defined-literal"
+  buildInputs = [
+    Spindle
   ];
 
-  doCheck = true;
+  NIX_CFLAGS_COMPILE = [
+    "-O2"
+    "-Wno-reserved-user-defined-literal"
+    "-Wno-unused-command-line-argument"
+    "-fpass-plugin=${Spindle}/lib/SpindlePass.so"
+    "-lstracer"
+  ];
+
+  doCheck = false;
+
+  postInstall = ''
+    install -Dm644 strace.log $out/share/omnetpp/strace.log
+  '';
 }
