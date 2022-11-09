@@ -5,7 +5,9 @@
 auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     bool res = leafChecker(v);
     auto I = dyn_cast<Instruction>(v);
+#ifdef __DEBUG
     std::cout << "is_leaf: " << res << ", is_instr: " << (I != nullptr) << std::endl;
+#endif
     if (!res && I) {
         return visit(I);
     } else {
@@ -89,9 +91,11 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
 }
 
 void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
-    std::cout << "GEP: " << Print(&GEPI) << std::endl;
     auto ptr = GEPI.getPointerOperand();
+#ifdef __DEBUG
+    std::cout << "GEP: " << Print(&GEPI) << std::endl;
     std::cout << "ptr: " << Print(ptr) << std::endl;
+#endif
     if (indVars.find(ptr) == indVars.end()) {                               // not loopVars
         if (auto instr = dyn_cast<Instruction>(ptr)) {
             visit(instr);
@@ -107,7 +111,9 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
 }
 
 void GEPDependenceVisitor::visitInstruction(Instruction &I) {
+#ifdef __DEBUG
     std::cout << "GEP_NORMAL: " << Print(&I) << std::endl;
+#endif
     if (meta[&I].isSTraceDependence) {
         return;
     }

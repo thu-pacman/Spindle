@@ -43,11 +43,13 @@ public:
     explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
                                   set<Value *> &indVars)
         : meta(meta), indVars(indVars) {        // indVars: loopVars
+#ifdef __DEBUG
             std::cout << "\nGEPVisitor_indVars:" << std::endl;
             for (auto indVar : indVars) {
                 std::cout << Print(indVar) << std::endl;
             }
             std::cout << std::endl;
+#endif
     }
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
     void visitInstruction(Instruction &I);

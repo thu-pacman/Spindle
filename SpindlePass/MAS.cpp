@@ -19,14 +19,17 @@ auto MASLoop::isLoopInvariant(Value *v) const -> bool {         // check a Value
 }
 
 auto MASLoop::analyze() -> bool {                               // whether the loop is analyzable
+#ifdef __DEBUG
     std::cout << "\nfind a loop !!!" << std::endl;
     std::cout << "Loop: " << Print(&(this->loop)) << std::endl;
+#endif
 
     auto header = loop.getHeader();
     auto preheader = loop.getLoopPreheader();           // the preheader must have only one exit !!!
     auto latch = loop.getLoopLatch();
     auto exitBB = loop.getExitBlock();
     if (!preheader || !latch || !exitBB) {      // not a canonical form
+#ifdef __DEBUG
         std::cout << "not a canonical form" << std::endl;
         // if (preheader) {
         //     std::cout << "preheader: " << Print(preheader) << std::endl;
@@ -37,6 +40,7 @@ auto MASLoop::analyze() -> bool {                               // whether the l
         // if (exitBB) {
         //     std::cout << "exitBB: " << Print(exitBB) << std::endl;
         // }
+#endif
         return false;
     }
     bool ret = false;
@@ -50,19 +54,25 @@ auto MASLoop::analyze() -> bool {                               // whether the l
         bool idForLatch = (phi->getIncomingBlock(1) == latch);      // (`for`, `do_while`) or `while`
         curIndVar.initValue = phi->getOperand(!idForLatch);
         // calculate delta
+#ifdef __DEBUG
         std::cout << "cur_instr: " << Print(&*instr) << std::endl;
         std::cout << "PHINode->latch: " << Print(phi->getOperand(idForLatch)) << std::endl;     // *ssa* trait
+#endif
 
         curIndVar.delta =
             ASTVisitor([&](Value *v) {                              // leafChecker(), why is it ???
                 return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
-            }, true).visitValue(phi->getOperand(idForLatch));
+            }).visitValue(phi->getOperand(idForLatch));
+#ifdef __DEBUG
         std::cout << "assign delta end" << std::endl;
+#endif
         if (curIndVar.delta->computable) {
             // check and calculate final value
             if (auto brI = cast<BranchInst>(latch->getTerminator());
                 brI->isConditional()) {
+#ifdef __DEBUG
                 std::cout << "icmpI: " << Print(dyn_cast<ICmpInst>(brI->getCondition())) << std::endl;
+#endif
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) { // what if the contition is not `ICmpInst` ???
                     bool idForIndVar =
                         (icmpI->getOperand(1) == phi->getOperand(idForLatch));      // loopVsar
@@ -71,7 +81,9 @@ auto MASLoop::analyze() -> bool {                               // whether the l
                             ->computable) {
                         curIndVar.finalValue = icmpI->getOperand(!idForIndVar);
                         indVars.push_back(curIndVar);
+#ifdef __DEBUG
                         std::cout << "indVar: " << Print(cast<Value>(phi)) << std::endl;
+#endif
                         parent->indVars.insert(cast<Value>(phi));
                         ret = true;
                     }
@@ -107,7 +119,9 @@ void MASFunction::analyzeLoop() {
     for (auto loop : rawLoops) {
         auto masLoop = new MASLoop(*loop, this);
         if (masLoop->analyze()) {
+#ifdef __DEBUG
             std::cout << "Find a analyzable loop: " << Print(&loop->getHeader()->front()) << std::endl;
+#endif
             instrMeta[&loop->getHeader()->front()].loop = masLoop;
             for (auto BB : loop->blocks()) {
                 // std::cout << "BB: " << Print(BB) << std::endl;

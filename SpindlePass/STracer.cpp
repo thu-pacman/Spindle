@@ -9,8 +9,8 @@ namespace llvm {
 
 void STracer::run(Instrumentation &instrument) {        // Static Trace
     std::error_code ec;
-    // raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
-    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
+    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
+    // raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
     strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
