@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macOS,Linux,Windows,C,C++,CMake
 # Edit at https://www.toptal.com/developers/gitignore?templates=macOS,Linux,Windows,C,C++,CMake
 
+# build
+build/
+
 # NPB
 NPB-CPP/
 
