@@ -101,10 +101,18 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
             visit(instr);
         }
     }
-    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
-         ++use) {
-        if (auto def = dyn_cast<Instruction>(use);
+    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();      // operands: op_range(op_begin(), op_end());
+         ++use) {                                                                   // using op_range = iterator_range<op_iterator>;
+                                                                                    // using op_iterator = Use*;
+#ifdef __DEBUG
+        std::cout << "typeid(use): " << typeid(use).name() << std::endl;        // Use*
+#endif
+        // if (auto def = dyn_cast<Instruction>(use->get());                              
+        if (auto def = dyn_cast<Instruction>(use);                                  // It's OK, why ?
             def && indVars.find(cast<Value>(use)) == indVars.end()) {       // not loopVars
+#ifdef __DEBUG
+            std::cout << "typeid(def): " << typeid(def).name() << std::endl;
+#endif
             visit(def);
         }
     }

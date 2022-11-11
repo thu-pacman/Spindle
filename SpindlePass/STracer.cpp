@@ -1,5 +1,6 @@
 #include "STracer.h"
 #include "llvm/Support/FileSystem.h"
+#include "utils.h"
 
 #include <queue>
 
@@ -16,10 +17,9 @@ void STracer::run(Instrumentation &instrument) {        // Static Trace
     for (auto F : MAS.functions) {
         strace << "Function: " << F->func.getName() << "\n";
         // step 1: find GEP dependencies
-        auto depVisitor = GEPDependenceVisitor(F->instrMeta, F->indVars);
+        auto depVisitor = GEPDependenceVisitor(F->instrMeta, F->indVars);       // mark all dependent instrs in `instrMeta`
         for (auto &BB : F->func) {
             for (auto &I : BB) {
-                // TODO: Nesting GEP in other instructions
                 if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     depVisitor.visit(*GEPI);
                 }
@@ -48,7 +48,7 @@ void STracer::run(Instrumentation &instrument) {        // Static Trace
         for (auto &BB : F->func) {
             if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord) {       // all needed-record but not-in-loop BBs'
                 if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());        // branches are in MDT
-                    BrI && BrI->isConditional()) {  // instrument for br
+                    BrI && BrI->isConditional()) {                              // instrument for br
                     F->instrMeta[BrI].isSTraceDependence = true;
                     instrument.record_br(BrI);
                 }
@@ -78,7 +78,7 @@ void STracer::run(Instrumentation &instrument) {        // Static Trace
                     if (auto endPosition = loop->getEndPosition()) {                // the first instr of exitBB
                         strace << "  For loop ends at " << *endPosition << '\n';
                     }
-                } else if (F->instrMeta[&I].isSTraceDependence) {
+                } else if (F->instrMeta[&I].isSTraceDependence) {                   // all instrs whose `isSTraceDependence==True`
                     strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     strace << *GEPI << "\n\tFormula: ";

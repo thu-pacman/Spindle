@@ -3,6 +3,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "visitor.h"
+#include "utils.h"
 
 using namespace llvm;
 
@@ -13,6 +14,8 @@ class STracerPass : public PassInfoMixin<STracerPass> {
 
 public:
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {      // entrance !!!
+        preprocess(M);      // nested_GEP
+
         MAS.analyze(M);
         Instrumentation instrument(M);
         STracer(MAS).run(instrument);

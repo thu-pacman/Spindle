@@ -28,7 +28,7 @@ class MASLoop {
     SmallVector<Loop *> loops;              // the loop's all subloops
 
 public:
-    SmallVector<LoopIndVar> indVars;        // computable loops
+    SmallVector<LoopIndVar> indVars;        // computable loops' loop variables
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
         // find all sub loops
