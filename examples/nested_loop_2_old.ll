@@ -10,19 +10,15 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nofree nounwind uwtable
 define dso_local i32 @main() local_unnamed_addr #0 {
-  call void @__spindle_init_main()
   %1 = tail call i32 (i8*, ...) @__isoc99_scanf(i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i32* noundef nonnull @n)
   %2 = load i32, i32* @n, align 4, !tbaa !3
-  call void @__spindle_record_value(i32 %2)
   %3 = icmp sgt i32 %2, 0
-  call void @__spindle_record_br(i1 %3)
   br i1 %3, label %4, label %12
 
 4:                                                ; preds = %0
   %5 = add i32 %2, -1
   %6 = icmp eq i32 %2, 1
   %7 = zext i32 %5 to i64
-  call void bitcast (void (i32)* @__spindle_record_value to void (i64)*)(i64 %7)
   br label %8
 
 8:                                                ; preds = %4, %13
@@ -34,7 +30,6 @@ define dso_local i32 @main() local_unnamed_addr #0 {
   br label %16
 
 12:                                               ; preds = %13, %0
-  call void @__spindle_fini_main()
   ret i32 0
 
 13:                                               ; preds = %16, %8
@@ -58,14 +53,6 @@ define dso_local i32 @main() local_unnamed_addr #0 {
 
 ; Function Attrs: nofree nounwind
 declare dso_local noundef i32 @__isoc99_scanf(i8* nocapture noundef readonly, ...) local_unnamed_addr #1
-
-declare void @__spindle_record_br(i1)
-
-declare void @__spindle_record_value(i32)
-
-declare void @__spindle_init_main()
-
-declare void @__spindle_fini_main()
 
 attributes #0 = { nofree nounwind uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { nofree nounwind "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }

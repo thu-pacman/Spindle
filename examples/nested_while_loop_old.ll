@@ -8,21 +8,17 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nofree nounwind uwtable
 define dso_local i32 @main() local_unnamed_addr #0 {
-  call void @__spindle_init_main()
   %1 = alloca i32, align 4
   %2 = bitcast i32* %1 to i8*
   call void @llvm.lifetime.start.p0i8(i64 4, i8* nonnull %2) #3
   %3 = call i32 (i8*, ...) @__isoc99_scanf(i8* noundef getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i32* noundef nonnull %1)
   %4 = load i32, i32* %1, align 4, !tbaa !3
-  call void @__spindle_record_value(i32 %4)
   %5 = icmp sgt i32 %4, 1
-  call void @__spindle_record_br(i1 %5)
   br i1 %5, label %6, label %26
 
 6:                                                ; preds = %0
   %7 = icmp eq i32 %4, 2
   %8 = zext i32 %4 to i64
-  call void bitcast (void (i32)* @__spindle_record_value to void (i64)*)(i64 %8)
   br label %9
 
 9:                                                ; preds = %6, %23
@@ -53,7 +49,6 @@ define dso_local i32 @main() local_unnamed_addr #0 {
 
 26:                                               ; preds = %23, %0
   call void @llvm.lifetime.end.p0i8(i64 4, i8* nonnull %2) #3
-  call void @__spindle_fini_main()
   ret i32 0
 }
 
@@ -65,14 +60,6 @@ declare dso_local noundef i32 @__isoc99_scanf(i8* nocapture noundef readonly, ..
 
 ; Function Attrs: argmemonly mustprogress nofree nosync nounwind willreturn
 declare void @llvm.lifetime.end.p0i8(i64 immarg, i8* nocapture) #1
-
-declare void @__spindle_record_br(i1)
-
-declare void @__spindle_record_value(i32)
-
-declare void @__spindle_init_main()
-
-declare void @__spindle_fini_main()
 
 attributes #0 = { nofree nounwind uwtable "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 attributes #1 = { argmemonly mustprogress nofree nosync nounwind willreturn }

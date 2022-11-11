@@ -14,7 +14,7 @@ class STracerPass : public PassInfoMixin<STracerPass> {
 
 public:
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {      // entrance !!!
-        preprocess(M);      // nested_GEP
+        // preprocess(M);      // to expand nested_GEP
 
         MAS.analyze(M);
         Instrumentation instrument(M);
