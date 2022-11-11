@@ -29,6 +29,9 @@ auto MASLoop::analyze() -> bool {                               // whether the l
     auto latch = loop.getLoopLatch();
     auto exitBB = loop.getExitBlock();
     if (!preheader || !latch || !exitBB) {      // not a canonical form
+    // if (!latch || !exitBB) {      // not a canonical form
+
+        is_canonical_loop = false;
 #ifdef __DEBUG
         std::cout << "not a canonical form" << std::endl;
         // if (preheader) {
@@ -42,6 +45,8 @@ auto MASLoop::analyze() -> bool {                               // whether the l
         // }
 #endif
         return false;
+    } else {
+        is_canonical_loop = true;
     }
     bool ret = false;
     for (auto instr = header->begin(); auto phi = dyn_cast<PHINode>(&(*instr));
@@ -116,6 +121,7 @@ void MASFunction::analyzeLoop() {
             rawLoops.push_back(subLoop);
         }
     }
+    num_loops = rawLoops.size();
     for (auto loop : rawLoops) {
         auto masLoop = new MASLoop(*loop, this);
         if (masLoop->analyze()) {
@@ -133,6 +139,9 @@ void MASFunction::analyzeLoop() {
         } else {
             delete masLoop;
         }
+        if (masLoop->is_canonical_loop) {
+            ++ num_canonical_form_loops;
+        }
     }
 }
 
@@ -142,5 +151,11 @@ void MASModule::analyze(Module &M) {
         if (!F.isDeclaration()) {
             functions.push_back(new MASFunction(F));
         }
+    }
+    num_loops = 0;
+    num_canonical_form_loops = 0;
+    for (auto func : functions) {
+        num_loops += func->num_loops;
+        num_canonical_form_loops += func->num_canonical_form_loops;
     }
 }

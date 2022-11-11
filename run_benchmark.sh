@@ -1,3 +1,5 @@
+set -x
+
 cd NPB-CPP/NPB-SER
 # 修改位于 config/make.def 的配置文件
 # 在 C_LIB 行末添加 -L<构建结果中libstracer.so所在的目录> -lstracer

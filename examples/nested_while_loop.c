@@ -9,8 +9,8 @@ int main() {
     while (i < n) {
         int j = 2;
         while (j < n) {
-            a[n + j - i] = a[j];
-            // printf("%d, %d\n", i, j);
+            // a[n + j - i] = a[j];
+            printf("%d, %d\n", i, j);
             ++ j;
         }
         ++ i;

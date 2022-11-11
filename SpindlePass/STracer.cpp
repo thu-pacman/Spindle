@@ -153,6 +153,7 @@ void STracer::run(Instrumentation &instrument) {        // Static Trace
             }
         }
     }
+    errs() << "Canonical loops: " << MAS.num_canonical_form_loops << '/' << MAS.num_loops << '\n';
     errs() << "Computable memory accesses in loops: " << cnt << '/' << tot
            << '\n';
     errs() << "Static trace has been dumped into strace.log.\n";

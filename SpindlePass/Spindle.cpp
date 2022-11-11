@@ -2,6 +2,7 @@
 #include "instrument.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
+#include "llvm/Transforms/Utils.h"
 #include "visitor.h"
 #include "utils.h"
 
@@ -13,8 +14,12 @@ class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
 
 public:
+    void getAnalysisUsage(AnalysisUsage& AU) const {    // invoke `loopSimplify` pass before STracerPass
+        AU.addRequiredID(LoopSimplifyID);
+    }
+
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {      // entrance !!!
-        // preprocess(M);      // to expand nested_GEP
+        preprocess(M);      // to expand nested_GEPInst
 
         MAS.analyze(M);
         Instrumentation instrument(M);
@@ -54,6 +59,7 @@ llvm::PassPluginLibraryInfo getSpindlePassPluginInfo()
         LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1", [](PassBuilder &PB) {
             PB.registerOptimizerLastEPCallback(
                 [](ModulePassManager &MPM, ...) {
+                    MPM.addPass(createModuleToFunctionPassAdaptor(LoopSimplifyPass()));     // add `-loop-simplify` pass
                     MPM.addPass(STracerPass());
                     return true;
                 });
