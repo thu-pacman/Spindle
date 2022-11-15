@@ -1,13 +1,12 @@
 #include "visitor.h"
+
 #include <iostream>
+
 #include "utils.h"
 
 auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     bool res = leafChecker(v);
     auto I = dyn_cast<Instruction>(v);
-#ifdef __DEBUG
-    std::cout << "is_leaf: " << res << ", is_instr: " << (I != nullptr) << std::endl;
-#endif
     if (!res && I) {
         return visit(I);
     } else {
@@ -16,8 +15,9 @@ auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
                    << '\n';
         }
         auto ret = new ASTLeafNode;
-        ret->v = v, ret->computable = res ? res : leafChecker(v);       // what's the fuck ??? 
-        return ret;                                                     // what is the case res == false && I == nullptr ???
+        ret->v = v,
+        ret->computable = res ? res : leafChecker(v);  // what's the fuck ???
+        return ret;  // what is the case res == false && I == nullptr ???
     }
 }
 
@@ -78,7 +78,8 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     auto ptr = GEPI.getPointerOperand();
     ASTAbstractNode *ret;
     ret = visitValue(ptr);
-    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();      // how to compute memory address ???
+    for (auto use = GEPI.operands().begin() + 1;
+         use != GEPI.operands().end();  // how to compute memory address ???
          ++use) {
         auto next = new ASTOpNode;
         next->lc = ret;
@@ -92,43 +93,33 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
 
 void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     auto ptr = GEPI.getPointerOperand();
-#ifdef __DEBUG
-    std::cout << "GEP: " << Print(&GEPI) << std::endl;
-    std::cout << "ptr: " << Print(ptr) << std::endl;
-#endif
-    if (indVars.find(ptr) == indVars.end()) {                               // not loopVars
+    if (indVars.find(ptr) == indVars.end()) {  // not loopVars
         if (auto instr = dyn_cast<Instruction>(ptr)) {
             visit(instr);
         }
     }
-    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();      // operands: op_range(op_begin(), op_end());
-         ++use) {                                                                   // using op_range = iterator_range<op_iterator>;
-                                                                                    // using op_iterator = Use*;
-#ifdef __DEBUG
-        std::cout << "typeid(use): " << typeid(use).name() << std::endl;        // Use*
-#endif
-        // if (auto def = dyn_cast<Instruction>(use->get());                              
-        if (auto def = dyn_cast<Instruction>(use);                                  // It's OK, why ?
-            def && indVars.find(cast<Value>(use)) == indVars.end()) {       // not loopVars
-#ifdef __DEBUG
-            std::cout << "typeid(def): " << typeid(def).name() << std::endl;
-#endif
+    for (auto use = GEPI.operands().begin() + 1;
+         use !=
+         GEPI.operands().end();  // operands: op_range(op_begin(), op_end());
+         ++use) {  // using op_range = iterator_range<op_iterator>;
+                   // using op_iterator = Use*;
+        if (auto def = dyn_cast<Instruction>(use);  // It's OK, why ?
+            def &&
+            indVars.find(cast<Value>(use)) == indVars.end()) {  // not loopVars
             visit(def);
         }
     }
 }
 
 void GEPDependenceVisitor::visitInstruction(Instruction &I) {
-#ifdef __DEBUG
-    std::cout << "GEP_NORMAL: " << Print(&I) << std::endl;
-#endif
     if (meta[&I].isSTraceDependence) {
         return;
     }
-    meta[&I].isSTraceDependence = true;                 // in MDT(Memory Dependency Tree)
+    meta[&I].isSTraceDependence = true;  // in MDT(Memory Dependency Tree)
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);
-            def && indVars.find(cast<Value>(use)) == indVars.end()) {       // not loopVars, Why ???
+            def && indVars.find(cast<Value>(use)) ==
+                       indVars.end()) {  // not loopVars, Why ???
             visit(def);
         }
     }

@@ -1,24 +1,24 @@
 #pragma once
 
+#include <functional>
+#include <iostream>
 #include <map>
 #include <set>
-#include <functional>
 #include <utility>
 
 #include "AST.h"
 #include "MAS.h"
 #include "llvm/IR/InstVisitor.h"
-
-#include <iostream>
 #include "utils.h"
 
 using namespace llvm;
+using std::function;
 using std::map;
 using std::set;
-using std::function;
 
 class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
-    function<bool(Value *)> leafChecker;        // check if `Value` is the leaf of Memory Access Tree/AST ???
+    function<bool(Value *)> leafChecker;  // check if `Value` is the leaf of
+                                          // Memory Access Tree/AST ???
     bool debug;
 
 public:
@@ -42,14 +42,7 @@ class GEPDependenceVisitor : public InstVisitor<GEPDependenceVisitor> {
 public:
     explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
                                   set<Value *> &indVars)
-        : meta(meta), indVars(indVars) {        // indVars: loopVars
-#ifdef __DEBUG
-            std::cout << "\nGEPVisitor_indVars:" << std::endl;
-            for (auto indVar : indVars) {
-                std::cout << Print(indVar) << std::endl;
-            }
-            std::cout << std::endl;
-#endif
+        : meta(meta), indVars(indVars) {  // indVars: loopVars
     }
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
     void visitInstruction(Instruction &I);

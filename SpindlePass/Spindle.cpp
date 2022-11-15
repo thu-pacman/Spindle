@@ -3,8 +3,8 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/Utils.h"
-#include "visitor.h"
 #include "utils.h"
+#include "visitor.h"
 
 using namespace llvm;
 
@@ -14,12 +14,14 @@ class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
 
 public:
-    void getAnalysisUsage(AnalysisUsage& AU) const {    // invoke `loopSimplify` pass before STracerPass
+    void getAnalysisUsage(AnalysisUsage &AU)
+        const {  // invoke `loopSimplify` pass before STracerPass
         AU.addRequiredID(LoopSimplifyID);
     }
 
-    PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM) {      // entrance !!!
-        preprocess(M);      // to expand nested_GEPInst
+    PreservedAnalyses run(Module &M,
+                          ModuleAnalysisManager &MAM) {  // entrance !!!
+        preprocess(M);  // to expand nested_GEPInst
 
         MAS.analyze(M);
         Instrumentation instrument(M);
@@ -39,7 +41,8 @@ public:
                     for (auto &I : BB) {
                         if (auto CallI = dyn_cast<CallInst>(&I)) {
                             auto func = CallI->getCalledFunction();
-                            if (func && func->getName().equals("exit")) {           // may call exit()
+                            if (func && func->getName().equals(
+                                            "exit")) {  // may call exit()
                                 instrument.fini_main(CallI);
                             }
                         }
@@ -53,21 +56,19 @@ public:
 
 }  // End of anonymous namespace.
 
-llvm::PassPluginLibraryInfo getSpindlePassPluginInfo()
-{
+llvm::PassPluginLibraryInfo getSpindlePassPluginInfo() {
     return {
         LLVM_PLUGIN_API_VERSION, "SpindlePass", "v0.1", [](PassBuilder &PB) {
-            PB.registerOptimizerLastEPCallback(
-                [](ModulePassManager &MPM, ...) {
-                    MPM.addPass(createModuleToFunctionPassAdaptor(LoopSimplifyPass()));     // add `-loop-simplify` pass
-                    MPM.addPass(STracerPass());
-                    return true;
-                });
+            PB.registerOptimizerLastEPCallback([](ModulePassManager &MPM, ...) {
+                MPM.addPass(createModuleToFunctionPassAdaptor(
+                    LoopSimplifyPass()));  // add `-loop-simplify` pass
+                MPM.addPass(STracerPass());
+                return true;
+            });
         }};
 }
 
-extern "C" LLVM_ATTRIBUTE_WEAK
-::llvm::PassPluginLibraryInfo llvmGetPassPluginInfo()
-{
-	return getSpindlePassPluginInfo();
+extern "C" LLVM_ATTRIBUTE_WEAK ::llvm::PassPluginLibraryInfo
+llvmGetPassPluginInfo() {
+    return getSpindlePassPluginInfo();
 }

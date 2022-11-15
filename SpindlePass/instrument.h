@@ -20,16 +20,19 @@ public:
         builder.CreateCall(func);
     }
     void fini_main(Instruction *I) const {
-        IRBuilder builder(I);       
+        IRBuilder builder(I);
         auto type = FunctionType::get(builder.getVoidTy(), {}, false);
         auto func = M.getOrInsertFunction("__spindle_fini_main", type);
         builder.CreateCall(func);
     };
     void record_br(BranchInst *I) const {
-        IRBuilder builder(I);           //  created instructions should be inserted *before* the specified instruction.
-        auto type = FunctionType::get(
-            builder.getVoidTy(), {I->getCondition()->getType()}, false);        // isVarArg: indicate that the number of
-                                                                                // arguments are variable
+        IRBuilder builder(I);  //  created instructions should be inserted
+                               //  *before* the specified instruction.
+        auto type =
+            FunctionType::get(builder.getVoidTy(),
+                              {I->getCondition()->getType()},
+                              false);  // isVarArg: indicate that the number of
+                                       // arguments are variable
         auto func = M.getOrInsertFunction("__spindle_record_br", type);
         builder.CreateCall(func, {I->getCondition()});
     }
@@ -38,19 +41,14 @@ public:
             return;
         }
         valueRecorded.insert(I);
-        auto nextNonPhi = I->getNextNode();                             // why get next non-PHINode ???
+        auto nextNonPhi = I->getNextNode();  // why get next non-PHINode ???
         for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
-             nextNonPhi = nextNonPhi->getNextNode());
-        // std::cout << "getNextNode_test: " << std::endl;
-        // std::cout << Print(I) << std::endl;
-        // std::cout << Print(I->getNextNode()) << std::endl;
-        // std::cout << Print(I->getNextNode()->getNextNode()) << std::endl;
-        // std::cout << Print(I->getNextNode()->getNextNode()->getNextNode()) << std::endl;
-        
+             nextNonPhi = nextNonPhi->getNextNode())
+            ;
         IRBuilder builder(nextNonPhi);
         auto value = cast<Value>(I);
         auto type =
-            FunctionType::get(builder.getVoidTy(), {value->getType()}, false);  
+            FunctionType::get(builder.getVoidTy(), {value->getType()}, false);
         auto func = M.getOrInsertFunction("__spindle_record_value", type);
         builder.CreateCall(func, {value});
     }
