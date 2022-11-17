@@ -16,8 +16,8 @@ auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
         }
         auto ret = new ASTLeafNode;
         ret->v = v,
-        ret->computable = res ? res : leafChecker(v);  // what's the fuck ???
-        return ret;  // what is the case res == false && I == nullptr ???
+        ret->computable = res ? res : leafChecker(v);
+        return ret;
     }
 }
 
@@ -78,8 +78,7 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     auto ptr = GEPI.getPointerOperand();
     ASTAbstractNode *ret;
     ret = visitValue(ptr);
-    for (auto use = GEPI.operands().begin() + 1;
-         use != GEPI.operands().end();  // how to compute memory address ???
+    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
          ++use) {
         auto next = new ASTOpNode;
         next->lc = ret;
@@ -103,7 +102,7 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
          GEPI.operands().end();  // operands: op_range(op_begin(), op_end());
          ++use) {  // using op_range = iterator_range<op_iterator>;
                    // using op_iterator = Use*;
-        if (auto def = dyn_cast<Instruction>(use);  // It's OK, why ?
+        if (auto def = dyn_cast<Instruction>(use);
             def &&
             indVars.find(cast<Value>(use)) == indVars.end()) {  // not loopVars
             visit(def);
@@ -118,8 +117,7 @@ void GEPDependenceVisitor::visitInstruction(Instruction &I) {
     meta[&I].isSTraceDependence = true;  // in MDT(Memory Dependency Tree)
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);
-            def && indVars.find(cast<Value>(use)) ==
-                       indVars.end()) {  // not loopVars, Why ???
+            def && indVars.find(cast<Value>(use)) == indVars.end()) {
             visit(def);
         }
     }
