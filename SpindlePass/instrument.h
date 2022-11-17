@@ -26,9 +26,13 @@ public:
         builder.CreateCall(func);
     };
     void record_br(BranchInst *I) const {
-        IRBuilder builder(I);
-        auto type = FunctionType::get(
-            builder.getVoidTy(), {I->getCondition()->getType()}, false);
+        IRBuilder builder(I);  //  created instructions should be inserted
+                               //  *before* the specified instruction.
+        auto type =
+            FunctionType::get(builder.getVoidTy(),
+                              {I->getCondition()->getType()},
+                              false);  // isVarArg: indicate that the number of
+                                       // arguments are variable
         auto func = M.getOrInsertFunction("__spindle_record_br", type);
         builder.CreateCall(func, {I->getCondition()});
     }
@@ -39,7 +43,8 @@ public:
         valueRecorded.insert(I);
         auto nextNonPhi = I->getNextNode();
         for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
-             nextNonPhi = nextNonPhi->getNextNode());
+             nextNonPhi = nextNonPhi->getNextNode())
+            ;
         IRBuilder builder(nextNonPhi);
         auto value = cast<Value>(I);
         auto type =

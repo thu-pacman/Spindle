@@ -8,6 +8,7 @@ target_include_directories(SpindlePass PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 # otherwise, we'll get linker errors about missing RTTI data.
 set_target_properties(SpindlePass PROPERTIES
     COMPILE_FLAGS "-fno-rtti"
+    # COMPILE_FLAGS "-frtti"
 )
 
 # Get proper shared-library behavior (where symbols are not necessarily

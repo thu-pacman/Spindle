@@ -1,18 +1,20 @@
 #pragma once
 
+#include <functional>
+#include <iostream>
 #include <map>
 #include <set>
-#include <functional>
 #include <utility>
 
 #include "AST.h"
 #include "MAS.h"
 #include "llvm/IR/InstVisitor.h"
+#include "utils.h"
 
 using namespace llvm;
+using std::function;
 using std::map;
 using std::set;
-using std::function;
 
 class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
     function<bool(Value *)> leafChecker;
@@ -39,7 +41,7 @@ class GEPDependenceVisitor : public InstVisitor<GEPDependenceVisitor> {
 public:
     explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
                                   set<Value *> &indVars)
-        : meta(meta), indVars(indVars) {
+        : meta(meta), indVars(indVars) {  // indVars: loopVars
     }
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
     void visitInstruction(Instruction &I);
