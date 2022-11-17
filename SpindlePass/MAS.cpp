@@ -9,7 +9,7 @@
 
 auto MASLoop::isLoopInvariant(Value *v) const
     -> bool {  // check a Value whether is invariable in the loop
-    if (Constant::classof(v) || Argument::classof(v)) {  // why `Argument` ???
+    if (Constant::classof(v) || Argument::classof(v)) {
         return true;
     }
     if (auto def = dyn_cast<Instruction>(
@@ -47,7 +47,7 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
         curIndVar.initValue = phi->getOperand(!idForLatch);
         // calculate delta
         curIndVar.delta =
-            ASTVisitor([&](Value *v) {  // leafChecker(), why is it ???
+            ASTVisitor([&](Value *v) {
                 return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
             })
                 .visitValue(phi->getOperand(idForLatch));
@@ -55,9 +55,7 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
             // check and calculate final value
             if (auto brI = cast<BranchInst>(latch->getTerminator());
                 brI->isConditional()) {
-                if (auto icmpI = dyn_cast<ICmpInst>(
-                        brI->getCondition())) {  // what if the contition is not
-                                                 // `ICmpInst` ???
+                if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
                         (icmpI->getOperand(1) ==
                          phi->getOperand(idForLatch));  // loopVsar
@@ -88,8 +86,7 @@ void MASFunction::analyzeLoop() {
     PassBuilder PB;
     FunctionAnalysisManager FAM;
     PB.registerFunctionAnalyses(FAM);
-    LI.analyze(
-        FAM.getResult<DominatorTreeAnalysis>(func));  // how does it works ???
+    LI.analyze(FAM.getResult<DominatorTreeAnalysis>(func));
     // traverse all rawLoops
     vector<Loop *> rawLoops;
     for (auto loop : LI) {
