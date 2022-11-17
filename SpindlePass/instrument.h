@@ -41,7 +41,7 @@ public:
             return;
         }
         valueRecorded.insert(I);
-        auto nextNonPhi = I->getNextNode();  // why get next non-PHINode ???
+        auto nextNonPhi = I->getNextNode();
         for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
              nextNonPhi = nextNonPhi->getNextNode())
             ;
