@@ -15,8 +15,7 @@ auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
                    << '\n';
         }
         auto ret = new ASTLeafNode;
-        ret->v = v,
-        ret->computable = res ? res : leafChecker(v);
+        ret->v = v, ret->computable = res;
         return ret;
     }
 }
