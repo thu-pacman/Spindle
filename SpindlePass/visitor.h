@@ -17,8 +17,7 @@ using std::map;
 using std::set;
 
 class ASTVisitor : public InstVisitor<ASTVisitor, ASTAbstractNode *> {
-    function<bool(Value *)> leafChecker;  // check if `Value` is the leaf of
-                                          // Memory Access Tree/AST ???
+    function<bool(Value *)> leafChecker;
     bool debug;
 
 public:
