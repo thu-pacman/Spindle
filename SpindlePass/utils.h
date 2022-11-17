@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../lib/IR/ConstantsContext.h"  // why i cannot include it ?
+#include "../lib/IR/ConstantsContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
