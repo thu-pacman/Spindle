@@ -188,3 +188,4 @@ $RECYCLE.BIN/
 *.log
 /.direnv
 /result*
+*.json
