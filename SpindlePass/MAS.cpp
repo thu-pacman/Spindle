@@ -58,7 +58,7 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
                         (icmpI->getOperand(1) ==
-                         phi->getOperand(idForLatch));  // loopVsar
+                         phi->getOperand(idForLatch));
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(
                                 icmpI->getOperand(!idForIndVar))  // finalValue
@@ -105,7 +105,7 @@ void MASFunction::analyzeLoop() {
             for (auto BB : loop->blocks()) {
                 bbMeta[BB].inMASLoop = true;
                 for (auto &I : *BB) {
-                    instrMeta[&I].loop = masLoop;  // WARNING: a instr might be
+                    instrMeta[&I].loop = masLoop;  // WARNING: an instr might be
                                                    // labeled by many loops !!!
                 }
             }

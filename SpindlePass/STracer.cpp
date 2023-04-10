@@ -20,7 +20,7 @@ void STracer::run(Instrumentation &instrument) {  // Static Trace
         // step 1: find GEP dependencies
         auto depVisitor = GEPDependenceVisitor(
             F->instrMeta,
-            F->indVars);  // mark all dependent instrs in `instrMeta`
+            F->indVars);  // mark all dependent instructions in `instrMeta`
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
@@ -83,14 +83,11 @@ void STracer::run(Instrumentation &instrument) {  // Static Trace
                         strace << '\n';
                     }
                     if (auto endPosition =
-                            loop->getEndPosition()) {  // the first instr of
-                                                       // exitBB
+                            loop->getEndPosition()) {  // the first instruction
+                                                       // of exitBB
                         strace << "  For loop ends at " << *endPosition << '\n';
                     }
-                } else if (
-                    F->instrMeta[&I]
-                        .isSTraceDependence) {  // all instrs whose
-                                                // `isSTraceDependence==True`
+                } else if (F->instrMeta[&I].isSTraceDependence) {
                     strace << I << '\n';
                 } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
                     strace << *GEPI << "\n\tFormula: ";

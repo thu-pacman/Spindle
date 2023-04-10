@@ -29,7 +29,7 @@ class MASLoop {
 
 public:
     SmallVector<LoopIndVar> indVars;  // computable loops' loop variables
-    bool is_canonical_loop;  // whether or not it satisfies loop simplify form
+    bool is_canonical_loop;  // whether it satisfies loop simplify form
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
         // find all sub loops
