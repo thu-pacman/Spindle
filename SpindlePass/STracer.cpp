@@ -9,10 +9,9 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(Instrumentation &instrument) {  // Static Trace
+void STracer::run(Instrumentation &instrument, bool fullBr) {  // Static Trace
     std::error_code ec;
-    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
-    // raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
+    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
     strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
@@ -50,9 +49,7 @@ void STracer::run(Instrumentation &instrument) {  // Static Trace
             }
         }
         for (auto &BB : F->func) {
-            if (!F->bbMeta[&BB].inMASLoop &&
-                F->bbMeta[&BB]
-                    .needRecord) {  // all needed-record but not-in-loop BBs'
+            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord || fullBr) {
                 if (auto BrI = dyn_cast<BranchInst>(
                         BB.getTerminator());        // branches are in MDT
                     BrI && BrI->isConditional()) {  // instrument for br

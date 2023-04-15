@@ -22,9 +22,7 @@ using namespace llvm;
 
 void preprocess(Module &M);
 
-void check_nested_GEP(
-    Instruction &I,
-    std::vector<std::pair<Instruction *, Instruction *> > &replace_list);
+void check_nested_GEP(Instruction &I);
 
 template <typename T>
 static std::string Print(T *value_or_type) {

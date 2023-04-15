@@ -15,7 +15,7 @@ public:
     explicit STracer(MASModule &MAS) : MAS(MAS) {
     }
 
-    void run(Instrumentation &instrument);
+    void run(Instrumentation &instrument, bool fullBr);
 };
 
 }  // namespace llvm
