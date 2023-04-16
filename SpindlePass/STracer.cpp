@@ -9,7 +9,7 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(Instrumentation &instrument, bool fullBr) {  // Static Trace
+void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {  // Static Trace
     std::error_code ec;
     raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
     strace << "File: " << instrument.getName() << "\n";
@@ -152,7 +152,7 @@ void STracer::run(Instrumentation &instrument, bool fullBr) {  // Static Trace
                         formula->print(errs());
                         errs() << '\n';
                     }*/
-                    if (!formula->computable) {
+                    if (!formula->computable || fullMem) {
                         instrument.record_value(GEPI);
                     }  // TODO: instrument for loop invariants
                 }
