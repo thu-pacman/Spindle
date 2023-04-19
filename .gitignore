@@ -191,3 +191,7 @@ $RECYCLE.BIN/
 *.json
 .cmake
 test
+*.dot
+run.sh
+*.ll
+*.s

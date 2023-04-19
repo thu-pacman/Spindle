@@ -17,7 +17,7 @@ make -j
 To compile a single file `1.c` with spindle analysis:
 
 ```shell
-clang 1.c -lstracer -L/path/to/Spindle/folder -fpass-plugin=/path/to/SpindlePass.so -o 1
+clang 1.c -lstracer -L/path/to/Spindle/folder -fpass-plugin=/path/to/SpindlePass.so -o 1 -O2 -fno-unroll-loops -fno-vectorize
 ```
 
 For example, in the following directory structure,
@@ -33,10 +33,10 @@ For example, in the following directory structure,
 the compilation command will be
 
 ```shell
-clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=`realpath Spindle/SpindelPass.so` -o 1
+clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=`realpath Spindle/SpindelPass.so` -o 1 -O2 -fno-unroll-loops -fno-vectorize
 ```
 
-If compiled with optimization level `-O2` and above, it is highly recommended to add `-fno-unroll-loops -fno-vectorize` to avoid loop analysis failure.
+Note that `-O2 -fno-unroll-loops -fno-vectorize` are necessary for static analysis.
 
 ### Spindle  Arguments
 
@@ -48,6 +48,6 @@ Currently Spindle supports the following arguments:
 To add `-arg` during compilation of a program, users should first add `-Xclang -load -Xclang /path/to/SpindlePass.so` to the clang compilation flag, and then add `-mllvm -arg` for each argument. For example, compiling `1.c` in the upper directory structure with both `-full_mem` and `-full_br`:
 
 ```shell
-clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=Spindle/SpindelPass.so -o 1 -Xclang -load -Xclang SpindlePass/SpindlePass.so -mllvm -full_br -mllvm -full_mem
+clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=Spindle/SpindelPass.so -o 1 -O2 -fno-unroll-loops -fno-vectorize -Xclang -load -Xclang SpindlePass/SpindlePass.so -mllvm -full_br -mllvm -full_mem
 ```
 

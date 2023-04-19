@@ -15,7 +15,6 @@ cl::opt<bool> fullBr("full_br", cl::init(false));
 
 class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
-
 public:
     void getAnalysisUsage(AnalysisUsage &AU) const {
         // invoke `loopSimplify` pass before STracerPass
@@ -28,7 +27,7 @@ public:
         errs() << "\tfull_mem: " << fullMem << '\n';
         errs() << "\tfull_br: " << fullBr << '\n';
 
-        preprocess(M);  // to expand nested_GEPInst
+        // preprocess(M);  // to expand nested_GEPInst
 
         MAS.analyze(M);
         Instrumentation instrument(M);

@@ -9,21 +9,35 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {  // Static Trace
+void STracer::run(Instrumentation &instrument,
+                  bool fullMem,
+                  bool fullBr) {  // Static Trace
     std::error_code ec;
     raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
     strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
         strace << "Function: " << F->func.getName() << "\n";
-        // step 1: find GEP dependencies
+        // step 1: find memory access dependencies
         auto depVisitor = GEPDependenceVisitor(
             F->instrMeta,
             F->indVars);  // mark all dependent instructions in `instrMeta`
         for (auto &BB : F->func) {
             for (auto &I : BB) {
-                if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    depVisitor.visit(*GEPI);
+                GetElementPtrInst *GEPI = nullptr;
+                if (auto LI = dyn_cast<LoadInst>(&I)) {
+                    GEPI = dyn_cast<GetElementPtrInst>(LI->getPointerOperand());
+                    if (!GEPI && !isa<GlobalObject>(LI->getPointerOperand())) {
+                        assert(false && "Load with non-GEP parameter?");
+                    }
+                } else if (auto SI = dyn_cast<StoreInst>(&I)) {
+                    GEPI = dyn_cast<GetElementPtrInst>(SI->getPointerOperand());
+                    if (!GEPI && !isa<GlobalObject>(LI->getPointerOperand())) {
+                        assert(false && "Store with non-GEP parameter?");
+                    }
+                }
+                if (GEPI) {
+                    depVisitor.visitGetElementPtrInst(*GEPI);
                 }
             }
         }
@@ -49,7 +63,8 @@ void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {  // 
             }
         }
         for (auto &BB : F->func) {
-            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord || fullBr) {
+            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord ||
+                fullBr) {
                 if (auto BrI = dyn_cast<BranchInst>(
                         BB.getTerminator());        // branches are in MDT
                     BrI && BrI->isConditional()) {  // instrument for br
@@ -79,82 +94,105 @@ void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {  // 
                         indVar.delta->print(strace);
                         strace << '\n';
                     }
-                    if (auto endPosition =
-                            loop->getEndPosition()) {  // the first instruction
-                                                       // of exitBB
+                    if (auto endPosition = loop->getEndPosition()) {
                         strace << "  For loop ends at " << *endPosition << '\n';
                     }
                 } else if (F->instrMeta[&I].isSTraceDependence) {
                     strace << I << '\n';
-                } else if (auto GEPI = dyn_cast<GetElementPtrInst>(&I)) {
-                    strace << *GEPI << "\n\tFormula: ";
-                    auto visitor = loop ? ASTVisitor([&](Value *v) {
-                        return loop->isLoopInvariant(v) || F->indVars.count(v);
-                    })
-                                        : ASTVisitor([](Value *v) {
-                                              return Constant::classof(v) ||
-                                                     Argument::classof(v);
-                                          });
-                    auto formula = visitor.visit(GEPI);
-                    formula->print(strace);
-                    strace << '\n';
-
-                    // analyze `GEP` layer by layer
-                    // TODO: below code is for struct access, merge to
-                    // GEPDependenceVisitor or move to a new function
-                    auto typeOfFirstElement = GEPI->getOperand(0)->getType();
-                    // Ignore the first value
-                    for (int i = 2; i < GEPI->getNumOperands(); i++) {
-                        auto ptrType =
-                            dyn_cast<PointerType>(typeOfFirstElement);
-                        auto curOperand = GEPI->getOperand(i);
-                        if (ptrType) {
-                            auto typeOfPtr = ptrType->getPointerElementType();
-                            if (auto structType =
-                                    dyn_cast<StructType>(typeOfPtr)) {
-                                strace << "       Getting (" << *curOperand
-                                       << ") of Struct type " << *typeOfPtr
-                                       << ":";
-                                if (auto CI =
-                                        dyn_cast<ConstantInt>(curOperand)) {
-                                    typeOfFirstElement =
-                                        (structType->getTypeAtIndex(
-                                            CI->getLimitedValue()));
-                                    strace << *typeOfFirstElement << "\n";
-                                } else {
-                                    strace << "Cannot calculate: non-constant"
-                                              "operand\n";
-                                    break;
-                                }
-                            } else if (auto AType =
-                                           dyn_cast<ArrayType>(typeOfPtr)) {
-                                strace << "       Getting (" << *curOperand
-                                       << ") value of ArrayType " << *typeOfPtr
-                                       << "\n";
-                                typeOfFirstElement = AType->getElementType();
-                            } else {
-                                strace << "Cannot analyze the type\n";
-                            }
+                } else {
+                    GetElementPtrInst *GEPI = nullptr;
+                    auto LI = dyn_cast<LoadInst>(&I);
+                    if (LI) {
+                        GEPI = dyn_cast<GetElementPtrInst>(
+                            LI->getPointerOperand());
+                    }
+                    auto SI = dyn_cast<StoreInst>(&I);
+                    if (SI) {
+                        GEPI = dyn_cast<GetElementPtrInst>(
+                            SI->getPointerOperand());
+                    }
+                    if (GEPI) {
+                        if (LI) {
+                            strace << *LI;
                         } else {
-                            strace << "Not a pointer halfway\n";
-                            break;
+                            strace << *SI;
                         }
-                        typeOfFirstElement =
-                            PointerType::getUnqual(typeOfFirstElement);
+                        strace << "\n\tFormula: ";
+                        auto visitor = loop ? ASTVisitor([&](Value *v) {
+                            return loop->isLoopInvariant(v) ||
+                                   F->indVars.count(v);
+                        })
+                                            : ASTVisitor([](Value *v) {
+                                                  return Constant::classof(v) ||
+                                                         Argument::classof(v);
+                                              });
+                        auto formula = visitor.visit(GEPI);
+                        formula->print(strace);
+                        strace << '\n';
+
+                        /*
+                        // analyze `GEP` layer by layer
+                        // TODO: below code is for struct access, merge to
+                        // GEPDependenceVisitor or move to a new function
+                        auto typeOfFirstElement =
+                            GEPI->getOperand(0)->getType();
+                        // Ignore the first value
+                        for (int i = 2; i < GEPI->getNumOperands(); i++) {
+                            auto ptrType =
+                                dyn_cast<PointerType>(typeOfFirstElement);
+                            auto curOperand = GEPI->getOperand(i);
+                            if (ptrType) {
+                                auto typeOfPtr =
+                                    ptrType->getPointerElementType();
+                                if (auto structType =
+                                        dyn_cast<StructType>(typeOfPtr)) {
+                                    strace << "       Getting (" << *curOperand
+                                           << ") of Struct type " << *typeOfPtr
+                                           << ":";
+                                    if (auto CI =
+                                            dyn_cast<ConstantInt>(curOperand)) {
+                                        typeOfFirstElement =
+                                            (structType->getTypeAtIndex(
+                                                CI->getLimitedValue()));
+                                        strace << *typeOfFirstElement << "\n";
+                                    } else {
+                                        strace
+                                            << "Cannot calculate: non-constant"
+                                               "operand\n";
+                                        break;
+                                    }
+                                } else if (auto AType =
+                                               dyn_cast<ArrayType>(typeOfPtr)) {
+                                    strace << "       Getting (" << *curOperand
+                                           << ") value of ArrayType "
+                                           << *typeOfPtr << "\n";
+                                    typeOfFirstElement =
+                                        AType->getElementType();
+                                } else {
+                                    strace << "Cannot analyze the type\n";
+                                }
+                            } else {
+                                strace << "Not a pointer halfway\n";
+                                break;
+                            }
+                            typeOfFirstElement =
+                                PointerType::getUnqual(typeOfFirstElement);
+                        }
+                         */
+                        if (loop) {
+                            ++tot;
+                            cnt += formula->computable;
+                        }
+                        /*
+                        if (!formula->computable && loop) {
+                            errs() << *GEPI << '\n';
+                            formula->print(errs());
+                            errs() << '\n';
+                        }*/
+                        if (!formula->computable || fullMem) {
+                            instrument.record_value(GEPI);
+                        }  // TODO: instrument for loop invariants
                     }
-                    if (loop) {
-                        ++tot;
-                        cnt += formula->computable;
-                    }
-                    /*
-                    if (!formula->computable && loop) {
-                        errs() << *GEPI << '\n';
-                        formula->print(errs());
-                        errs() << '\n';
-                    }*/
-                    if (!formula->computable || fullMem) {
-                        instrument.record_value(GEPI);
-                    }  // TODO: instrument for loop invariants
                 }
             }
         }

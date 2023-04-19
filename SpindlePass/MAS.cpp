@@ -109,11 +109,11 @@ void MASFunction::analyzeLoop() {
                                                    // labeled by many loops !!!
                 }
             }
+            if (masLoop->is_canonical_loop) {
+                ++num_canonical_form_loops;
+            }
         } else {
             delete masLoop;
-        }
-        if (masLoop->is_canonical_loop) {
-            ++num_canonical_form_loops;
         }
     }
 }

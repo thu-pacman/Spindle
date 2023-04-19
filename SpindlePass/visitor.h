@@ -39,8 +39,8 @@ class GEPDependenceVisitor : public InstVisitor<GEPDependenceVisitor> {
     set<Value *> &indVars;
 
 public:
-    explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
-                                  set<Value *> &indVars)
+    GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
+                         set<Value *> &indVars)
         : meta(meta), indVars(indVars) {  // indVars: loopVars
     }
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);

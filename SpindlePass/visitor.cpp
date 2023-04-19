@@ -90,20 +90,17 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
 }
 
 void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+    meta[&GEPI].isSTraceDependence = true;
     auto ptr = GEPI.getPointerOperand();
-    if (indVars.find(ptr) == indVars.end()) {  // not loopVars
+    if (indVars.find(ptr) == indVars.end()) {
         if (auto instr = dyn_cast<Instruction>(ptr)) {
             visit(instr);
         }
     }
-    for (auto use = GEPI.operands().begin() + 1;
-         use !=
-         GEPI.operands().end();  // operands: op_range(op_begin(), op_end());
-         ++use) {  // using op_range = iterator_range<op_iterator>;
-                   // using op_iterator = Use*;
+    for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
+         ++use) {
         if (auto def = dyn_cast<Instruction>(use);
-            def &&
-            indVars.find(cast<Value>(use)) == indVars.end()) {  // not loopVars
+            def && indVars.find(cast<Value>(use)) == indVars.end()) {
             visit(def);
         }
     }
@@ -113,7 +110,7 @@ void GEPDependenceVisitor::visitInstruction(Instruction &I) {
     if (meta[&I].isSTraceDependence) {
         return;
     }
-    meta[&I].isSTraceDependence = true;  // in MDT(Memory Dependency Tree)
+    meta[&I].isSTraceDependence = true;
     for (auto &use : I.operands()) {
         if (auto def = dyn_cast<Instruction>(use);
             def && indVars.find(cast<Value>(use)) == indVars.end()) {
