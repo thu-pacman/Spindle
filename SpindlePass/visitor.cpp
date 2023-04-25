@@ -35,23 +35,13 @@ auto ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI)
     if (debug) {
         errs() << "Visiting unary instruction" << UI << '\n';
     }
-    switch (UI.getOpcode()) {
-    // ignore trivial cast
-    case Instruction::SExt:
-    case Instruction::ZExt:
-    case Instruction::Trunc:
-    case Instruction::FPToSI:
-    case Instruction::Load:
-        // FIXME: Actually `load` should not be a unary operator. Here `load` is
-        // for conveniently checking loop invariants. Consider using
-        // Loop::isLoopInvariant instead.
+    if (isa<CastInst>(UI)) {
         return visitValue(UI.getOperand(0));
-        // TODO: add case for UnaryOperator
-    default:
+    } else {
         auto ret = new ASTLeafNode;
-        ret->v = &UI, ret->computable = false;
+        ret->v = &UI, ret->computable = leafChecker(cast<Value>(&UI));
         if (debug) {
-            errs() << "0\n";
+            errs() << ret->computable << '\n';
         }
         return ret;
     }
@@ -89,7 +79,19 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     return ret;
 }
 
-void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
+void MemDependenceVisitor::visitLoadInst(LoadInst &LI) {
+    if (auto pointer = dyn_cast<Instruction>(LI.getPointerOperand())) {
+        visit(pointer);
+    }
+}
+
+void MemDependenceVisitor::visitStoreInst(StoreInst &SI) {
+    if (auto pointer = dyn_cast<Instruction>(SI.getPointerOperand())) {
+        visit(pointer);
+    }
+}
+
+void MemDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     meta[&GEPI].isSTraceDependence = true;
     auto ptr = GEPI.getPointerOperand();
     if (indVars.find(ptr) == indVars.end()) {
@@ -106,7 +108,7 @@ void GEPDependenceVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI) {
     }
 }
 
-void GEPDependenceVisitor::visitInstruction(Instruction &I) {
+void MemDependenceVisitor::visitInstruction(Instruction &I) {
     if (meta[&I].isSTraceDependence) {
         return;
     }

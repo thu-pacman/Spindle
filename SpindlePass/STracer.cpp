@@ -13,31 +13,22 @@ void STracer::run(Instrumentation &instrument,
                   bool fullMem,
                   bool fullBr) {  // Static Trace
     std::error_code ec;
-    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Text);
+    raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
     strace << "File: " << instrument.getName() << "\n";
     int tot = 0, cnt = 0;
     for (auto F : MAS.functions) {
         strace << "Function: " << F->func.getName() << "\n";
         // step 1: find memory access dependencies
-        auto depVisitor = GEPDependenceVisitor(
+        auto depVisitor = MemDependenceVisitor(
             F->instrMeta,
             F->indVars);  // mark all dependent instructions in `instrMeta`
         for (auto &BB : F->func) {
             for (auto &I : BB) {
                 GetElementPtrInst *GEPI = nullptr;
                 if (auto LI = dyn_cast<LoadInst>(&I)) {
-                    GEPI = dyn_cast<GetElementPtrInst>(LI->getPointerOperand());
-                    if (!GEPI && !isa<GlobalObject>(LI->getPointerOperand())) {
-                        assert(false && "Load with non-GEP parameter?");
-                    }
+                    depVisitor.visit(LI);
                 } else if (auto SI = dyn_cast<StoreInst>(&I)) {
-                    GEPI = dyn_cast<GetElementPtrInst>(SI->getPointerOperand());
-                    if (!GEPI && !isa<GlobalObject>(LI->getPointerOperand())) {
-                        assert(false && "Store with non-GEP parameter?");
-                    }
-                }
-                if (GEPI) {
-                    depVisitor.visitGetElementPtrInst(*GEPI);
+                    depVisitor.visit(SI);
                 }
             }
         }
@@ -100,18 +91,16 @@ void STracer::run(Instrumentation &instrument,
                 } else if (F->instrMeta[&I].isSTraceDependence) {
                     strace << I << '\n';
                 } else {
-                    GetElementPtrInst *GEPI = nullptr;
+                    Instruction *ptr = nullptr;
                     auto LI = dyn_cast<LoadInst>(&I);
                     if (LI) {
-                        GEPI = dyn_cast<GetElementPtrInst>(
-                            LI->getPointerOperand());
+                        ptr = dyn_cast<Instruction>(LI->getPointerOperand());
                     }
                     auto SI = dyn_cast<StoreInst>(&I);
                     if (SI) {
-                        GEPI = dyn_cast<GetElementPtrInst>(
-                            SI->getPointerOperand());
+                        ptr = dyn_cast<Instruction>(SI->getPointerOperand());
                     }
-                    if (GEPI) {
+                    if (ptr) {
                         if (LI) {
                             strace << *LI;
                         } else {
@@ -123,17 +112,16 @@ void STracer::run(Instrumentation &instrument,
                                    F->indVars.count(v);
                         })
                                             : ASTVisitor([](Value *v) {
-                                                  return Constant::classof(v) ||
-                                                         Argument::classof(v);
+                                                  return Constant::classof(v);
                                               });
-                        auto formula = visitor.visit(GEPI);
+                        auto formula = visitor.visit(ptr);
                         formula->print(strace);
                         strace << '\n';
 
                         /*
                         // analyze `GEP` layer by layer
                         // TODO: below code is for struct access, merge to
-                        // GEPDependenceVisitor or move to a new function
+                        // MemDependenceVisitor or move to a new function
                         auto typeOfFirstElement =
                             GEPI->getOperand(0)->getType();
                         // Ignore the first value
@@ -185,12 +173,25 @@ void STracer::run(Instrumentation &instrument,
                         }
                         /*
                         if (!formula->computable && loop) {
-                            errs() << *GEPI << '\n';
+                            errs() << "non-computable in loop:\n";
+                            if (LI) {
+                                errs() << '\t' << *LI << "\n\t";
+                            } else {
+                                errs() << '\t' << *SI << "\n\t";
+                            }
                             formula->print(errs());
                             errs() << '\n';
-                        }*/
+                            ASTVisitor(
+                                [&](Value *v) {
+                                  return loop->isLoopInvariant(v) ||
+                                         F->indVars.count(v);
+                                },
+                                true)
+                                .visit(ptr);
+                        }
+                         */
                         if (!formula->computable || fullMem) {
-                            instrument.record_value(GEPI);
+                            instrument.record_value(ptr);
                         }  // TODO: instrument for loop invariants
                     }
                 }

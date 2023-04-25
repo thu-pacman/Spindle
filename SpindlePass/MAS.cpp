@@ -9,6 +9,7 @@
 
 auto MASLoop::isLoopInvariant(Value *v) const
     -> bool {  // check a Value whether is invariable in the loop
+    return loop.isLoopInvariant(v);
     if (Constant::classof(v) || Argument::classof(v)) {
         return true;
     }

@@ -67,8 +67,8 @@ public:
     size_t num_canonical_form_loops;  // number of loops which satisfy loop
                                       // simplify form
 
-    explicit MASFunction(Function &func) : func(func) {
-        num_canonical_form_loops = 0;
+    explicit MASFunction(Function &func)
+        : func(func), num_canonical_form_loops(0) {
         analyzeLoop();  // now only find all loops
     }
 };
