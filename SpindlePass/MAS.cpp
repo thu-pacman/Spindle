@@ -10,16 +10,6 @@
 auto MASLoop::isLoopInvariant(Value *v) const
     -> bool {  // check a Value whether is invariable in the loop
     return loop.isLoopInvariant(v);
-    if (Constant::classof(v) || Argument::classof(v)) {
-        return true;
-    }
-    if (auto def = dyn_cast<Instruction>(
-            v)) {  // all subloops cannot contain the `Instruction`
-        return std::all_of(loops.begin(), loops.end(), [&](Loop *L) {
-            return !L->contains(def);
-        });
-    }
-    return false;
 }
 
 auto MASLoop::analyze() -> bool {  // whether the loop is analyzable

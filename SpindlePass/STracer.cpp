@@ -9,9 +9,7 @@ using namespace llvm;
 
 namespace llvm {
 
-void STracer::run(Instrumentation &instrument,
-                  bool fullMem,
-                  bool fullBr) {  // Static Trace
+void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {
     std::error_code ec;
     raw_fd_ostream strace("strace.log", ec, sys::fs::OF_Append);
     strace << "File: " << instrument.getName() << "\n";
@@ -24,7 +22,6 @@ void STracer::run(Instrumentation &instrument,
             F->indVars);  // mark all dependent instructions in `instrMeta`
         for (auto &BB : F->func) {
             for (auto &I : BB) {
-                GetElementPtrInst *GEPI = nullptr;
                 if (auto LI = dyn_cast<LoadInst>(&I)) {
                     depVisitor.visit(LI);
                 } else if (auto SI = dyn_cast<StoreInst>(&I)) {
@@ -117,56 +114,6 @@ void STracer::run(Instrumentation &instrument,
                         auto formula = visitor.visit(ptr);
                         formula->print(strace);
                         strace << '\n';
-
-                        /*
-                        // analyze `GEP` layer by layer
-                        // TODO: below code is for struct access, merge to
-                        // MemDependenceVisitor or move to a new function
-                        auto typeOfFirstElement =
-                            GEPI->getOperand(0)->getType();
-                        // Ignore the first value
-                        for (int i = 2; i < GEPI->getNumOperands(); i++) {
-                            auto ptrType =
-                                dyn_cast<PointerType>(typeOfFirstElement);
-                            auto curOperand = GEPI->getOperand(i);
-                            if (ptrType) {
-                                auto typeOfPtr =
-                                    ptrType->getPointerElementType();
-                                if (auto structType =
-                                        dyn_cast<StructType>(typeOfPtr)) {
-                                    strace << "       Getting (" << *curOperand
-                                           << ") of Struct type " << *typeOfPtr
-                                           << ":";
-                                    if (auto CI =
-                                            dyn_cast<ConstantInt>(curOperand)) {
-                                        typeOfFirstElement =
-                                            (structType->getTypeAtIndex(
-                                                CI->getLimitedValue()));
-                                        strace << *typeOfFirstElement << "\n";
-                                    } else {
-                                        strace
-                                            << "Cannot calculate: non-constant"
-                                               "operand\n";
-                                        break;
-                                    }
-                                } else if (auto AType =
-                                               dyn_cast<ArrayType>(typeOfPtr)) {
-                                    strace << "       Getting (" << *curOperand
-                                           << ") value of ArrayType "
-                                           << *typeOfPtr << "\n";
-                                    typeOfFirstElement =
-                                        AType->getElementType();
-                                } else {
-                                    strace << "Cannot analyze the type\n";
-                                }
-                            } else {
-                                strace << "Not a pointer halfway\n";
-                                break;
-                            }
-                            typeOfFirstElement =
-                                PointerType::getUnqual(typeOfFirstElement);
-                        }
-                         */
                         if (loop) {
                             ++tot;
                             cnt += formula->computable;

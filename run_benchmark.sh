@@ -12,6 +12,6 @@ mkdir -p ./bin
 # for workload in BT CG EP FT IS LU MG SP; do
 for workload in EP IS CG; do
 
-  make "$workload" CLASS=C
+  make "$workload" CLASS=A
 done
 # bin 目录下即是构建出的二进制
