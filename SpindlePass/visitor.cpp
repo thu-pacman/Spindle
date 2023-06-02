@@ -1,7 +1,5 @@
 #include "visitor.h"
 
-#include <iostream>
-
 #include "utils.h"
 
 auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {

@@ -149,7 +149,7 @@ void STracer::run(Instrumentation &instrument, bool fullMem, bool fullBr) {
            << MAS.num_loops << '\n';
     errs() << "Computable memory accesses in loops: " << cnt << '/' << tot
            << '\n';
-    errs() << "Static trace has been dumped into strace.log.\n";
+    errs() << "Static trace has been dumped into " << STRACE_FILE_NAME << ".\n";
 }
 
 }  // namespace llvm

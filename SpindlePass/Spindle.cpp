@@ -3,6 +3,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/Utils.h"
+#include "llvm/Support/FileSystem.h"
 #include "utils.h"
 #include "visitor.h"
 
@@ -15,10 +16,12 @@ cl::opt<bool> fullBr("full_br", cl::init(false));
 
 class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
+
 public:
     void getAnalysisUsage(AnalysisUsage &AU) const {
         // invoke `loopSimplify` pass before STracerPass
         AU.addRequiredID(LoopSimplifyID);
+        AU.setPreservesCFG();
     }
 
     PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
@@ -30,6 +33,10 @@ public:
         // preprocess(M);  // to expand nested_GEPInst
 
         MAS.analyze(M);
+        // Delete old strace
+        if (sys::fs::exists(STRACE_FILE_NAME)) {
+            sys::fs::remove(STRACE_FILE_NAME);
+        }
         Instrumentation instrument(M);
         STracer(MAS).run(instrument, fullMem, fullBr);
         // instrument for main function
@@ -56,7 +63,9 @@ public:
                 }
             }
         }
-        return PreservedAnalyses::none();
+        PreservedAnalyses PA = PreservedAnalyses::none();
+        PA.preserveSet<CFGAnalyses>();
+        return PA;
     }
 };
 

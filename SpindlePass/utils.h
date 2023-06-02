@@ -18,6 +18,8 @@
 
 using namespace llvm;
 
+const char STRACE_FILE_NAME[] = "strace.log";
+
 void preprocess(Module &M);
 
 void check_nested_GEP(Instruction &I);
