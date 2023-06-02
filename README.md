@@ -2,40 +2,52 @@
 
 Spindle is an efficient memory access monitoring framework. Unlike methods delaying all checks to runtime or performing task-specific optimization at compile time, Spindle performs common static analysis to identify predictable memory access patterns into a compact program structure summary. Custom memory monitoring tools can then be developed on top of Spindle, leveraging the structural information extracted to dramatically reduce the amount of instrumentation that incurs heavy runtime memory address examination or recording.
 
-## Requirements:
-LLVM 15.0.0
+## Requirements
+LLVM (tested on 14.0.0)
 
-## Installation as an out-of-tree pass:
+## Installation
 ```shell
-./build.sh $<desired toolchain name> SpindlePass
+git clone https://github.com/thu-pacman/Spindle
+cd Spindle
+cmake .
+make -j
 ```
 
-for example
+## Run Test
+To compile a single file `1.c` with spindle analysis:
 
 ```shell
-./build.sh ubuntu SpindlePass
+clang 1.c -lstracer -L/path/to/Spindle/folder -fpass-plugin=/path/to/SpindlePass.so -o 1 -O2 -fno-unroll-loops -fno-vectorize
 ```
 
-## Run test:
+For example, in the following directory structure,
+
+```
+├── 1.c
+└── Spindle
+    ├── libstracer.so
+    └── SpindlePass
+        └── SpindlePass.so
+```
+
+the compilation command will be
+
 ```shell
-./build_example.sh $<desired toolchain name> $<pass name> $<example name in ./examples> $<clang optimisation level>
+clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=`realpath Spindle/SpindelPass.so` -o 1 -O2 -fno-unroll-loops -fno-vectorize
 ```
 
-for example
+Note that `-O2 -fno-unroll-loops -fno-vectorize` are necessary for static analysis.
+
+### Spindle  Arguments
+
+Currently Spindle supports the following arguments:
+
++ `-full_mem`, perform a full memory access instrumentation
++ `-full_br`, perform a full branch result instrumentation
+
+To add `-arg` during compilation of a program, users should first add `-Xclang -load -Xclang /path/to/SpindlePass.so` to the clang compilation flag, and then add `-mllvm -arg` for each argument. For example, compiling `1.c` in the upper directory structure with both `-full_mem` and `-full_br`:
 
 ```shell
-./build_example.sh ubuntu SpindlePass stracer loop_unsafe 0
+clang 1.c -lstracer -L`realpath Spindle` -fpass-plugin=Spindle/SpindelPass.so -o 1 -O2 -fno-unroll-loops -fno-vectorize -Xclang -load -Xclang SpindlePass/SpindlePass.so -mllvm -full_br -mllvm -full_mem
 ```
 
-or more commonly
-
-```shell
-./build_example.sh ubuntu SpindlePass stracer loop_unsafe 2 -fno-unroll-loops -fno-vectorize
-```
-
-Notes that to simplify the work in the current status, the source files under `./examples` are all considered written in C (due to the fixed suffix, `.c`, is used in the script). It can be extended to support arbitrary language (which, however, must be supported by LLVM) in the future in case of necessity.
-
-Load Spindle pass directly using clang is currently not supported since this version do not support LLVM's new PassManager.
-Supporting for new PassManager will be updated in the future version.
-
-Now Spindle is still under updating: divide the Spindle common static to different modules so that the logic can be more clear; re-implement S-Tracer with the latest version of LLVM (previous version of S-Tracer is based on LLVM 3.5); optimize S-Detector for more efficient memory bug checking, including using better algorithm for static analysis and implementing a faster runtime library.

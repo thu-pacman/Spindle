@@ -29,7 +29,7 @@ class MASLoop {
 
 public:
     SmallVector<LoopIndVar> indVars;  // computable loops' loop variables
-    bool is_canonical_loop;  // whether or not it satisfies loop simplify form
+    bool is_canonical_loop;           // whether it satisfies loop simplify form
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
         // find all sub loops
@@ -63,12 +63,12 @@ public:
     set<Value *> indVars;  // loopVars
     map<Instruction *, InstrMetaInfo> instrMeta;
     map<BasicBlock *, BBMetaInfo> bbMeta;
-    int num_loops;                 // number of loops in this function
-    int num_canonical_form_loops;  // number of loops which satisfy loop
-                                   // simplify form
+    size_t num_loops;                 // number of loops in this function
+    size_t num_canonical_form_loops;  // number of loops which satisfy loop
+                                      // simplify form
 
-    explicit MASFunction(Function &func) : func(func) {
-        num_canonical_form_loops = 0;
+    explicit MASFunction(Function &func)
+        : func(func), num_canonical_form_loops(0) {
         analyzeLoop();  // now only find all loops
     }
 };
@@ -76,9 +76,9 @@ public:
 class MASModule {
 public:
     vector<MASFunction *> functions;
-    int num_loops;                 // number of loops in this module
-    int num_canonical_form_loops;  // number of loops which satisfy loop
-                                   // simplify form
+    size_t num_loops;                 // number of loops in this module
+    size_t num_canonical_form_loops;  // number of loops which satisfy loop
+                                      // simplify form
 
     void analyze(Module &m);
 };

@@ -10,7 +10,7 @@ class Instrumentation {
 public:
     explicit Instrumentation(Module &M) : M(M) {
     }
-    StringRef getName() const {
+    [[nodiscard]] StringRef getName() const {
         return M.getName();
     }
     void init_main(Instruction *I) const {

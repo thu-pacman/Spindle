@@ -34,15 +34,17 @@ public:
 
 struct InstrMetaInfo;
 
-class GEPDependenceVisitor : public InstVisitor<GEPDependenceVisitor> {
+class MemDependenceVisitor : public InstVisitor<MemDependenceVisitor> {
     map<Instruction *, InstrMetaInfo> &meta;
     set<Value *> &indVars;
 
 public:
-    explicit GEPDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
-                                  set<Value *> &indVars)
+    MemDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
+                         set<Value *> &indVars)
         : meta(meta), indVars(indVars) {  // indVars: loopVars
     }
+    void visitLoadInst(LoadInst &LI);
+    void visitStoreInst(StoreInst &SI);
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
     void visitInstruction(Instruction &I);
 };

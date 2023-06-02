@@ -189,3 +189,9 @@ $RECYCLE.BIN/
 /.direnv
 /result*
 *.json
+.cmake
+test
+*.dot
+run.sh
+*.ll
+*.s

@@ -9,16 +9,7 @@
 
 auto MASLoop::isLoopInvariant(Value *v) const
     -> bool {  // check a Value whether is invariable in the loop
-    if (Constant::classof(v) || Argument::classof(v)) {
-        return true;
-    }
-    if (auto def = dyn_cast<Instruction>(
-            v)) {  // all subloops cannot contain the `Instruction`
-        return std::all_of(loops.begin(), loops.end(), [&](Loop *L) {
-            return !L->contains(def);
-        });
-    }
-    return false;
+    return loop.isLoopInvariant(v);
 }
 
 auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
@@ -58,7 +49,7 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
                 if (auto icmpI = dyn_cast<ICmpInst>(brI->getCondition())) {
                     bool idForIndVar =
                         (icmpI->getOperand(1) ==
-                         phi->getOperand(idForLatch));  // loopVsar
+                         phi->getOperand(idForLatch));
                     if (ASTVisitor([&](Value *v) { return isLoopInvariant(v); })
                             .visitValue(
                                 icmpI->getOperand(!idForIndVar))  // finalValue
@@ -105,15 +96,15 @@ void MASFunction::analyzeLoop() {
             for (auto BB : loop->blocks()) {
                 bbMeta[BB].inMASLoop = true;
                 for (auto &I : *BB) {
-                    instrMeta[&I].loop = masLoop;  // WARNING: a instr might be
+                    instrMeta[&I].loop = masLoop;  // WARNING: an instr might be
                                                    // labeled by many loops !!!
                 }
             }
+            if (masLoop->is_canonical_loop) {
+                ++num_canonical_form_loops;
+            }
         } else {
             delete masLoop;
-        }
-        if (masLoop->is_canonical_loop) {
-            ++num_canonical_form_loops;
         }
     }
 }

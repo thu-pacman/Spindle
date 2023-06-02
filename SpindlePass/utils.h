@@ -1,9 +1,7 @@
 #pragma once
-// #define __DEBUG
 
 #include <string>
 
-//#include "../lib/IR/ConstantsContext.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
@@ -22,14 +20,4 @@ using namespace llvm;
 
 void preprocess(Module &M);
 
-void check_nested_GEP(
-    Instruction &I,
-    std::vector<std::pair<Instruction *, Instruction *> > &replace_list);
-
-template <typename T>
-static std::string Print(T *value_or_type) {
-    std::string str;
-    llvm::raw_string_ostream stream(str);
-    value_or_type->print(stream);
-    return str;
-}
+void check_nested_GEP(Instruction &I);

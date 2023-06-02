@@ -10,22 +10,28 @@ using namespace llvm;
 
 namespace {
 
+cl::opt<bool> fullMem("full_mem", cl::init(false));
+cl::opt<bool> fullBr("full_br", cl::init(false));
+
 class STracerPass : public PassInfoMixin<STracerPass> {
     MASModule MAS;
-
 public:
-    void getAnalysisUsage(AnalysisUsage &AU)
-        const {  // invoke `loopSimplify` pass before STracerPass
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+        // invoke `loopSimplify` pass before STracerPass
         AU.addRequiredID(LoopSimplifyID);
     }
 
-    PreservedAnalyses run(Module &M,
-                          ModuleAnalysisManager &MAM) {  // entrance !!!
-        preprocess(M);  // to expand nested_GEPInst
+    PreservedAnalyses run(Module &M, ModuleAnalysisManager &) {
+        // show args
+        errs() << "Args:\n";
+        errs() << "\tfull_mem: " << fullMem << '\n';
+        errs() << "\tfull_br: " << fullBr << '\n';
+
+        // preprocess(M);  // to expand nested_GEPInst
 
         MAS.analyze(M);
         Instrumentation instrument(M);
-        STracer(MAS).run(instrument);
+        STracer(MAS).run(instrument, fullMem, fullBr);
         // instrument for main function
         if (auto main = M.getFunction("main")) {
             // init main
