@@ -25,33 +25,23 @@ class MASLoop {
 
     Loop &loop;
     MASFunction *parent;
-    SmallVector<Loop *> loops;  // the loop's all subloops
 
 public:
     SmallVector<LoopIndVar> indVars;  // computable loops' loop variables
-    bool is_canonical_loop;           // whether it satisfies loop simplify form
 
     MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
-        // find all sub loops
-        loops = {&loop};
-        for (unsigned i = 0; i < loops.size(); ++i) {
-            for (auto subLoop : loops[i]->getSubLoops()) {
-                loops.push_back(subLoop);
-            }
-        }
     }
     auto isLoopInvariant(Value *v) const -> bool;
-    [[nodiscard]] auto getEndPosition() const -> Instruction *;
     auto analyze() -> bool;
 };
 
 struct InstrMetaInfo {
     bool isSTraceDependence = false;
-    MASLoop *loop = nullptr;
 };
 
 struct BBMetaInfo {
     bool needRecord = false, inMASLoop = false;
+    MASLoop *loop = nullptr;
 };
 
 class MASFunction {
@@ -60,15 +50,13 @@ class MASFunction {
 
 public:
     Function &func;
-    set<Value *> indVars;  // loopVars
+    set<Value *> indVars;
     map<Instruction *, InstrMetaInfo> instrMeta;
     map<BasicBlock *, BBMetaInfo> bbMeta;
-    size_t num_loops;                 // number of loops in this function
-    size_t num_canonical_form_loops;  // number of loops which satisfy loop
-                                      // simplify form
+    size_t num_loops;
+    size_t num_computable_loops;
 
-    explicit MASFunction(Function &func)
-        : func(func), num_canonical_form_loops(0) {
+    explicit MASFunction(Function &func) : func(func), num_computable_loops(0) {
         analyzeLoop();  // now only find all loops
     }
 };
@@ -76,9 +64,8 @@ public:
 class MASModule {
 public:
     vector<MASFunction *> functions;
-    size_t num_loops;                 // number of loops in this module
-    size_t num_canonical_form_loops;  // number of loops which satisfy loop
-                                      // simplify form
+    size_t num_loops;
+    size_t num_computable_loops;
 
     void analyze(Module &m);
 };

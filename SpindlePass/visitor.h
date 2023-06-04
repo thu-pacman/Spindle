@@ -48,3 +48,15 @@ public:
     void visitGetElementPtrInst(GetElementPtrInst &GEPI);
     void visitInstruction(Instruction &I);
 };
+
+class InstrumentationVisitor {
+    function<void(ASTLeafNode *)> leafInstrumentation;
+
+public:
+    explicit InstrumentationVisitor(function<void(ASTLeafNode *)> leafFunc)
+        : leafInstrumentation(std::move(leafFunc)) {
+    }
+    void visit(ASTAbstractNode *v);
+    void visit(ASTLeafNode *v);
+    void visit(ASTOpNode *v);
+};

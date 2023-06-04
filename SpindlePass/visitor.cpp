@@ -118,3 +118,19 @@ void MemDependenceVisitor::visitInstruction(Instruction &I) {
         }
     }
 }
+
+void InstrumentationVisitor::visit(ASTAbstractNode *v) {
+    if (auto leaf = dynamic_cast<ASTLeafNode *>(v)) {
+        visit(leaf);
+    } else {
+        visit(dynamic_cast<ASTOpNode *>(v));
+    }
+}
+
+void InstrumentationVisitor::visit(ASTLeafNode *v) {
+    leafInstrumentation(v);
+}
+
+void InstrumentationVisitor::visit(ASTOpNode *v) {
+    visit(v->lc), visit(v->rc);
+}
