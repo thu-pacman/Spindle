@@ -14,10 +14,10 @@ void __spindle_fini_main() {
 }
 
 void __spindle_record_br(bool cond) {
-    fprintf(fp, "%d\n", cond);
+    fprintf(fp, "b%d\n", cond);
 }
 
 void __spindle_record_value(unsigned long long value) {
-    fprintf(fp, "%llu\n", value);
+    fprintf(fp, "v%llu\n", value);
 }
 }

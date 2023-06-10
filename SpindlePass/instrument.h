@@ -3,29 +3,49 @@
 
 using namespace llvm;
 
-class Instrumentation {
+class InstrumentationBase {
+protected:
     Module &M;
     set<Instruction *> valueRecorded;
 
 public:
-    explicit Instrumentation(Module &M) : M(M) {
+    explicit InstrumentationBase(Module &M) : M(M) {
     }
-    [[nodiscard]] StringRef getName() const {
+
+    [[nodiscard]] auto getName() const {
         return M.getName();
     }
-    void init_main(Instruction *I) const {
+    [[nodiscard]] auto &getInstrumentedSymbols() {
+        return valueRecorded;
+    }
+    virtual void init_main(Instruction *I) const {
+    }
+    virtual void fini_main(Instruction *I) const {
+    }
+    virtual void record_br(BranchInst *I) const {
+    }
+    virtual void record_value(Instruction *I) {
+        valueRecorded.insert(I);
+    }
+};
+
+class Instrumentation : public InstrumentationBase {
+public:
+    explicit Instrumentation(Module &M) : InstrumentationBase(M) {
+    }
+    void init_main(Instruction *I) const override {
         IRBuilder builder(I);
         auto type = FunctionType::get(builder.getVoidTy(), {}, false);
         auto func = M.getOrInsertFunction("__spindle_init_main", type);
         builder.CreateCall(func);
     }
-    void fini_main(Instruction *I) const {
+    void fini_main(Instruction *I) const override {
         IRBuilder builder(I);
         auto type = FunctionType::get(builder.getVoidTy(), {}, false);
         auto func = M.getOrInsertFunction("__spindle_fini_main", type);
         builder.CreateCall(func);
     };
-    void record_br(BranchInst *I) const {
+    void record_br(BranchInst *I) const override {
         IRBuilder builder(I);  //  created instructions should be inserted
                                //  *before* the specified instruction.
         auto type =
@@ -36,7 +56,7 @@ public:
         auto func = M.getOrInsertFunction("__spindle_record_br", type);
         builder.CreateCall(func, {I->getCondition()});
     }
-    void record_value(Instruction *I) {
+    void record_value(Instruction *I) override {
         if (valueRecorded.count(I)) {
             return;
         }

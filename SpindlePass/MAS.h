@@ -15,28 +15,31 @@ using std::map;
 using std::set;
 using std::vector;
 
+class MASModule;
 class MASFunction;
 
-class MASLoop {
-    struct LoopIndVar {
-        Value *initValue, *finalValue;
-        ASTAbstractNode *delta;
-    };
+struct LoopIndVar {
+    Value *initValue, *finalValue;
+    ASTAbstractNode *delta;
+};
 
+class MASLoop {
     Loop &loop;
     MASFunction *parent;
 
 public:
     SmallVector<LoopIndVar> indVars;  // computable loops' loop variables
 
-    MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
-    }
+    MASLoop(Loop &loop, MASFunction *func);
+
     auto isLoopInvariant(Value *v) const -> bool;
     auto analyze() -> bool;
 };
 
 struct InstrMetaInfo {
     bool isSTraceDependence = false;
+    ASTAbstractNode *formula = nullptr;
+    LoopIndVar *indVar = nullptr;
 };
 
 struct BBMetaInfo {
@@ -50,22 +53,25 @@ class MASFunction {
 
 public:
     Function &func;
+    MASModule *parent;
     set<Value *> indVars;
     map<Instruction *, InstrMetaInfo> instrMeta;
     map<BasicBlock *, BBMetaInfo> bbMeta;
     size_t num_loops;
     size_t num_computable_loops;
 
-    explicit MASFunction(Function &func) : func(func), num_computable_loops(0) {
-        analyzeLoop();  // now only find all loops
-    }
+    MASFunction(Function &func, MASModule *module);
 };
 
 class MASModule {
 public:
+    Module *module;
     vector<MASFunction *> functions;
     size_t num_loops;
     size_t num_computable_loops;
+    LLVMContext *context;
 
-    void analyze(Module &m);
+    explicit MASModule(Module &M);
+
+    void analyze();
 };

@@ -1,8 +1,18 @@
 #include "visitor.h"
 
+#include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "utils.h"
 
-auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
+FormulaVisitor::FormulaVisitor(function<bool(Value *)> leafComputableChecker,
+                               MASModule *M,
+                               bool debug)
+    : leafChecker(std::move(leafComputableChecker)),
+      DL(M->module),
+      debug(debug),
+      context(M->context) {
+}
+
+auto FormulaVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     bool res = leafChecker(v);
     auto I = dyn_cast<Instruction>(v);
     if (!res && I) {
@@ -18,7 +28,7 @@ auto ASTVisitor::visitValue(Value *v) -> ASTAbstractNode * {
     }
 }
 
-auto ASTVisitor::visitInstruction(Instruction &I) -> ASTAbstractNode * {
+auto FormulaVisitor::visitInstruction(Instruction &I) -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting other instruction" << I << ' '
                << leafChecker(cast<Value>(&I)) << '\n';
@@ -28,7 +38,7 @@ auto ASTVisitor::visitInstruction(Instruction &I) -> ASTAbstractNode * {
     return ret;
 }
 
-auto ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI)
+auto FormulaVisitor::visitUnaryInstruction(UnaryInstruction &UI)
     -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting unary instruction" << UI << '\n';
@@ -45,7 +55,8 @@ auto ASTVisitor::visitUnaryInstruction(UnaryInstruction &UI)
     }
 }
 
-auto ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) -> ASTAbstractNode * {
+auto FormulaVisitor::visitBinaryOperator(BinaryOperator &BOI)
+    -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting binary operator instruction" << BOI << '\n';
     }
@@ -57,7 +68,7 @@ auto ASTVisitor::visitBinaryOperator(BinaryOperator &BOI) -> ASTAbstractNode * {
     return ret;
 }
 
-auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
+auto FormulaVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     -> ASTAbstractNode * {
     if (debug) {
         errs() << "Visiting GEP" << GEPI << '\n';
@@ -65,16 +76,28 @@ auto ASTVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     auto ptr = GEPI.getPointerOperand();
     ASTAbstractNode *ret;
     ret = visitValue(ptr);
+    auto GTI = gep_type_begin(GEPI);
     for (auto use = GEPI.operands().begin() + 1; use != GEPI.operands().end();
-         ++use) {
-        auto next = new ASTOpNode;
-        next->lc = ret;
-        next->rc = visitValue(use->get());
+         ++use, ++GTI) {
+        auto next = new ASTOpNode, cur = new ASTOpNode;
+        auto offset = new ASTLeafNode;
+        offset->v = IRBuilder<>(*context).getInt32(
+            DL.getTypeSizeInBits(GTI.getIndexedType()) / 8);
+        offset->computable = true;
+        cur->lc = offset, cur->rc = visitValue(use->get());
+        cur->opCode = Instruction::Mul;
+        cur->computable = cur->rc->computable;
+        next->lc = ret, next->rc = cur;
         next->opCode = Instruction::Add;
         next->computable = next->lc->computable && next->rc->computable;
         ret = next;
     }
     return ret;
+}
+
+MemDependenceVisitor::MemDependenceVisitor(
+    map<Instruction *, InstrMetaInfo> &meta, set<Value *> &indVars)
+    : meta(meta), indVars(indVars) {
 }
 
 void MemDependenceVisitor::visitLoadInst(LoadInst &LI) {
@@ -119,18 +142,68 @@ void MemDependenceVisitor::visitInstruction(Instruction &I) {
     }
 }
 
-void InstrumentationVisitor::visit(ASTAbstractNode *v) {
+template <class T>
+auto ASTVisitor<T>::dispatch(ASTAbstractNode *v) -> T {
     if (auto leaf = dynamic_cast<ASTLeafNode *>(v)) {
-        visit(leaf);
+        return visit(leaf);
     } else {
-        visit(dynamic_cast<ASTOpNode *>(v));
+        return visit(dynamic_cast<ASTOpNode *>(v));
     }
+}
+
+InstrumentationVisitor::InstrumentationVisitor(
+    function<void(ASTLeafNode *)> leafFunc)
+    : leafInstrumentation(std::move(leafFunc)) {
+}
+
+void InstrumentationVisitor::visit(ASTOpNode *v) {
+    dispatch(v->lc), dispatch(v->rc);
 }
 
 void InstrumentationVisitor::visit(ASTLeafNode *v) {
     leafInstrumentation(v);
 }
 
-void InstrumentationVisitor::visit(ASTOpNode *v) {
-    visit(v->lc), visit(v->rc);
+CalculationVisitor::CalculationVisitor(SymbolTable &table)
+    : table(table) {
+}
+
+auto CalculationVisitor::visit(ASTOpNode *v) -> ValueType {
+    auto lc = dispatch(v->lc), rc = dispatch(v->rc);
+    switch (v->opCode) {
+    case Instruction::Add:
+        return lc + rc;
+    case Instruction::Sub:
+        return lc - rc;
+    case Instruction::Mul:
+        return lc * rc;
+    case Instruction::UDiv:
+    case Instruction::SDiv:
+        return lc / rc;
+    case Instruction::URem:
+    case Instruction::SRem:
+        return lc % rc;
+    case Instruction::Shl:
+        return lc << rc;
+    case Instruction::LShr:
+    case Instruction::AShr:
+        return lc >> rc;
+    case Instruction::And:
+        return lc & rc;
+    case Instruction::Or:
+        return lc | rc;
+    case Instruction::Xor:
+        return lc ^ rc;
+    default:
+        errs() << "Unknown opcode for BinaryOperator: " << v->opCode << "\n";
+        exit(1);
+    }
+}
+
+auto CalculationVisitor::visit(ASTLeafNode *v) -> ValueType {
+    if (auto constant = dyn_cast<ConstantInt>(v->v)) {
+        return constant->getZExtValue();
+    } else {
+        return table[cast<Instruction>(v->v)];
+    }
 }

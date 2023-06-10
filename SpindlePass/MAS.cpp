@@ -5,6 +5,9 @@
 
 #include "utils.h"
 
+MASLoop::MASLoop(Loop &loop, MASFunction *func) : loop(loop), parent(func) {
+}
+
 auto MASLoop::isLoopInvariant(Value *v) const -> bool {
     return loop.isLoopInvariant(v);
 }
@@ -29,9 +32,12 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
         curIndVar.initValue = phi->getOperand(!idForLatch);
         // calculate delta
         curIndVar.delta =
-            ASTVisitor([&](Value *v) {
-                return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
-            }).visitValue(phi->getOperand(idForLatch));
+            FormulaVisitor(
+                [&](Value *v) {
+                    return (v == dyn_cast<Value>(instr) || isLoopInvariant(v));
+                },
+                parent->parent)
+                .visitValue(phi->getOperand(idForLatch));
         if (curIndVar.delta->computable) {
             // check and calculate final value
             if (auto brI = cast<BranchInst>(latch->getTerminator());
@@ -43,19 +49,25 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
                     if (isLoopInvariant(curIndVar.finalValue)) {
                         // more fine-grained check may be applicable with
                         // following visitor pattern
-                        // if (ASTVisitor([&](Value *v) { return
+                        // if (FormulaVisitor([&](Value *v) { return
                         // isLoopInvariant(v); })
                         //.visitValue(curIndVar.finalValue)
                         //->computable) {
                         indVars.push_back(curIndVar);
                         parent->indVars.insert(cast<Value>(phi));
                         ret = true;
+                        parent->instrMeta[phi].indVar = &*indVars.rbegin();
                     }
                 }
             }
         }
     }
     return ret;
+}
+
+MASFunction::MASFunction(Function &func, MASModule *module)
+    : func(func), parent(module), num_computable_loops(0) {
+    analyzeLoop();  // now only find all loops
 }
 
 void MASFunction::analyzeLoop() {
@@ -89,11 +101,15 @@ void MASFunction::analyzeLoop() {
     }
 }
 
-void MASModule::analyze(Module &M) {
+MASModule::MASModule(Module &M) : module(&M) {
+    context = new LLVMContext;
+}
+
+void MASModule::analyze() {
     functions.clear();
-    for (auto &F : M) {
+    for (auto &F : *module) {
         if (!F.isDeclaration()) {
-            functions.push_back(new MASFunction(F));
+            functions.push_back(new MASFunction(F, this));
         }
     }
     num_loops = 0;

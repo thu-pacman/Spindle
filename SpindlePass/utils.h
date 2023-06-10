@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -18,7 +19,8 @@
 
 using namespace llvm;
 
-const char STRACE_FILE_NAME[] = "strace.log";
+using ValueType = unsigned long long;
+using SymbolTable = DenseMap<Instruction *, ValueType>;
 
 void preprocess(Module &M);
 

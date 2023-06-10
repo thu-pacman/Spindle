@@ -55,7 +55,7 @@ void check_nested_GEP(Instruction &I) {
         // CallI->getOperand
         bool has_nested_GEP = false;
         for (auto &use : CallI->operands()) {
-            if (dyn_cast<GEPOperator>(use.get())) {
+            if (isa<GEPOperator>(use.get())) {
                 has_nested_GEP = true;
             }
         }
