@@ -11,10 +11,6 @@
 
 using namespace llvm;
 
-using std::map;
-using std::set;
-using std::vector;
-
 class MASModule;
 class MASFunction;
 
@@ -49,14 +45,13 @@ struct BBMetaInfo {
 
 class MASFunction {
     LoopInfo LI;
-    void analyzeLoop();
 
 public:
     Function &func;
     MASModule *parent;
-    set<Value *> indVars;
-    map<Instruction *, InstrMetaInfo> instrMeta;
-    map<BasicBlock *, BBMetaInfo> bbMeta;
+    std::set<Value *> indVars;
+    DenseMap<Instruction *, InstrMetaInfo> instrMeta;
+    DenseMap<BasicBlock *, BBMetaInfo> bbMeta;
     size_t num_loops;
     size_t num_computable_loops;
 
@@ -66,12 +61,11 @@ public:
 class MASModule {
 public:
     Module *module;
-    vector<MASFunction *> functions;
+    std::vector<MASFunction *> functions;
     size_t num_loops;
     size_t num_computable_loops;
     LLVMContext *context;
 
     explicit MASModule(Module &M);
-
-    void analyze();
+    ~MASModule();
 };

@@ -67,16 +67,12 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
 
 MASFunction::MASFunction(Function &func, MASModule *module)
     : func(func), parent(module), num_computable_loops(0) {
-    analyzeLoop();  // now only find all loops
-}
-
-void MASFunction::analyzeLoop() {
     PassBuilder PB;
     FunctionAnalysisManager FAM;
     PB.registerFunctionAnalyses(FAM);
     LI.analyze(FAM.getResult<DominatorTreeAnalysis>(func));
     // traverse all rawLoops
-    vector<Loop *> rawLoops;
+    std::vector<Loop *> rawLoops;
     for (auto loop : LI) {
         rawLoops.push_back(loop);
     }
@@ -101,13 +97,11 @@ void MASFunction::analyzeLoop() {
     }
 }
 
-MASModule::MASModule(Module &M) : module(&M) {
+MASModule::MASModule(Module &M) {
+    module = &M;
     context = new LLVMContext;
-}
-
-void MASModule::analyze() {
     functions.clear();
-    for (auto &F : *module) {
+    for (auto &F : M) {
         if (!F.isDeclaration()) {
             functions.push_back(new MASFunction(F, this));
         }
@@ -118,4 +112,8 @@ void MASModule::analyze() {
         num_loops += func->num_loops;
         num_computable_loops += func->num_computable_loops;
     }
+}
+
+MASModule::~MASModule() {
+    delete context;
 }

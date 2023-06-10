@@ -12,22 +12,19 @@
 #include "utils.h"
 
 using namespace llvm;
-using std::function;
-using std::map;
-using std::set;
 
 class MASModule;
 
 class FormulaVisitor : public InstVisitor<FormulaVisitor, ASTAbstractNode *> {
-    function<bool(Value *)> leafChecker;
+    std::function<bool(Value *)> leafChecker;
     bool debug;
     DataLayout DL;
     LLVMContext *context;
 
 public:
-    FormulaVisitor(function<bool(Value *)> leafComputableChecker,
-               MASModule *M,
-               bool debug = false);
+    FormulaVisitor(decltype(leafChecker) leafComputableChecker,
+                   MASModule *M,
+                   bool debug = false);
 
     auto visitValue(Value *v) -> ASTAbstractNode *;
     auto visitInstruction(Instruction &I) -> ASTAbstractNode *;
@@ -39,12 +36,11 @@ public:
 struct InstrMetaInfo;
 
 class MemDependenceVisitor : public InstVisitor<MemDependenceVisitor> {
-    map<Instruction *, InstrMetaInfo> &meta;
-    set<Value *> &indVars;
+    DenseMap<Instruction *, InstrMetaInfo> &meta;
+    std::set<Value *> &indVars;
 
 public:
-    MemDependenceVisitor(map<Instruction *, InstrMetaInfo> &meta,
-                         set<Value *> &indVars);
+    MemDependenceVisitor(decltype(meta) &meta, decltype(indVars) &indVars);
 
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
@@ -61,10 +57,10 @@ public:
 };
 
 class InstrumentationVisitor : public ASTVisitor<void> {
-    function<void(ASTLeafNode *)> leafInstrumentation;
+    std::function<void(ASTLeafNode *)> leafInstrumentation;
 
 public:
-    explicit InstrumentationVisitor(function<void(ASTLeafNode *)> leafFunc);
+    explicit InstrumentationVisitor(decltype(leafInstrumentation) leafFunc);
 
     void visit(ASTOpNode *v) override;
     void visit(ASTLeafNode *v) override;

@@ -134,7 +134,7 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
 void STracer::replay(Function *func,
                      DTraceParser &dtrace,
                      raw_fd_ostream &out,
-                     const set<Instruction *> &instrumentedSymbols,
+                     const std::set<Instruction *> &instrumentedSymbols,
                      SymbolTable &table) {
     MASFunction *MASFunc = nullptr;
     for (auto f : MAS.functions) {

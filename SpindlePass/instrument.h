@@ -6,7 +6,7 @@ using namespace llvm;
 class InstrumentationBase {
 protected:
     Module &M;
-    set<Instruction *> valueRecorded;
+    std::set<Instruction *> valueRecorded;
 
 public:
     explicit InstrumentationBase(Module &M) : M(M) {

@@ -32,7 +32,6 @@ public:
         // preprocess(M);  // to expand nested_GEPInst
 
         MASModule MAS(M);
-        MAS.analyze();
         auto *instrument =
             replay ? new InstrumentationBase(M) : new Instrumentation(M);
         STracer stracer(MAS);

@@ -3,7 +3,7 @@
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "utils.h"
 
-FormulaVisitor::FormulaVisitor(function<bool(Value *)> leafComputableChecker,
+FormulaVisitor::FormulaVisitor(decltype(leafChecker) leafComputableChecker,
                                MASModule *M,
                                bool debug)
     : leafChecker(std::move(leafComputableChecker)),
@@ -95,8 +95,8 @@ auto FormulaVisitor::visitGetElementPtrInst(GetElementPtrInst &GEPI)
     return ret;
 }
 
-MemDependenceVisitor::MemDependenceVisitor(
-    map<Instruction *, InstrMetaInfo> &meta, set<Value *> &indVars)
+MemDependenceVisitor::MemDependenceVisitor(decltype(meta) &meta,
+                                           decltype(indVars) &indVars)
     : meta(meta), indVars(indVars) {
 }
 
@@ -152,7 +152,7 @@ auto ASTVisitor<T>::dispatch(ASTAbstractNode *v) -> T {
 }
 
 InstrumentationVisitor::InstrumentationVisitor(
-    function<void(ASTLeafNode *)> leafFunc)
+    decltype(leafInstrumentation) leafFunc)
     : leafInstrumentation(std::move(leafFunc)) {
 }
 
@@ -164,8 +164,7 @@ void InstrumentationVisitor::visit(ASTLeafNode *v) {
     leafInstrumentation(v);
 }
 
-CalculationVisitor::CalculationVisitor(SymbolTable &table)
-    : table(table) {
+CalculationVisitor::CalculationVisitor(SymbolTable &table) : table(table) {
 }
 
 auto CalculationVisitor::visit(ASTOpNode *v) -> ValueType {
