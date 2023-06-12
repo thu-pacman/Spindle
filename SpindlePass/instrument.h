@@ -6,7 +6,8 @@ using namespace llvm;
 class InstrumentationBase {
 protected:
     Module &M;
-    std::set<Instruction *> valueRecorded;
+    std::set<Value *> valueRecorded;
+    SmallVector<GlobalValue *> globalRecorded;
 
 public:
     explicit InstrumentationBase(Module &M) : M(M) {
@@ -15,8 +16,11 @@ public:
     [[nodiscard]] auto getName() const {
         return M.getName();
     }
-    [[nodiscard]] auto &getInstrumentedSymbols() {
+    [[nodiscard]] auto &getInstrumentedSymbols() const {
         return valueRecorded;
+    }
+    [[nodiscard]] auto &getInstrumentedGlobals() const {
+        return globalRecorded;
     }
     virtual void init_main(Instruction *I) const {
     }
@@ -24,8 +28,13 @@ public:
     }
     virtual void record_br(BranchInst *I) const {
     }
-    virtual void record_value(Instruction *I) {
-        valueRecorded.insert(I);
+    virtual void record_value(Value *V) {
+        if (valueRecorded.find(V) == valueRecorded.end()) {
+            valueRecorded.insert(V);
+            if (auto GV = dyn_cast<GlobalValue>(V)) {
+                globalRecorded.push_back(GV);
+            }
+        }
     }
 };
 
@@ -46,8 +55,7 @@ public:
         builder.CreateCall(func);
     };
     void record_br(BranchInst *I) const override {
-        IRBuilder builder(I);  //  created instructions should be inserted
-                               //  *before* the specified instruction.
+        IRBuilder builder(I);
         auto type =
             FunctionType::get(builder.getVoidTy(),
                               {I->getCondition()->getType()},
@@ -56,20 +64,27 @@ public:
         auto func = M.getOrInsertFunction("__spindle_record_br", type);
         builder.CreateCall(func, {I->getCondition()});
     }
-    void record_value(Instruction *I) override {
-        if (valueRecorded.count(I)) {
+    void record_value(Value *V) override {
+        if (valueRecorded.count(V)) {
             return;
         }
-        valueRecorded.insert(I);
-        auto nextNonPhi = I->getNextNode();
-        for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
-             nextNonPhi = nextNonPhi->getNextNode())
-            ;
-        IRBuilder builder(nextNonPhi);
-        auto value = cast<Value>(I);
+        valueRecorded.insert(V);
+        IRBuilder<> *builder;
+        if (auto I = dyn_cast<Instruction>(V)) {
+            auto nextNonPhi = I->getNextNode();
+            for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
+                 nextNonPhi = nextNonPhi->getNextNode())
+                ;
+            builder = new IRBuilder(nextNonPhi);
+        } else {
+            V = cast<GlobalValue>(V);
+            builder =
+                new IRBuilder(&M.getFunction("main")->getEntryBlock().front());
+        }
         auto type =
-            FunctionType::get(builder.getVoidTy(), {value->getType()}, false);
+            FunctionType::get(builder->getVoidTy(), {V->getType()}, false);
         auto func = M.getOrInsertFunction("__spindle_record_value", type);
-        builder.CreateCall(func, {value});
+        builder->CreateCall(func, {V});
+        delete builder;
     }
 };

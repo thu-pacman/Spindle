@@ -71,7 +71,7 @@ public:
             stracer.replay(M.getFunction("main"),
                            dTraceParser,
                            full_trace,
-                           instrument->getInstrumentedSymbols(),
+                           instrument,
                            table);
             return PreservedAnalyses::all();
         }

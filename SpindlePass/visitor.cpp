@@ -203,6 +203,7 @@ auto CalculationVisitor::visit(ASTLeafNode *v) -> ValueType {
     if (auto constant = dyn_cast<ConstantInt>(v->v)) {
         return constant->getZExtValue();
     } else {
-        return table[cast<Instruction>(v->v)];
+        assert(table.find(v->v) != table.end());
+        return table[v->v];
     }
 }

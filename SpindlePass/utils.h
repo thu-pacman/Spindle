@@ -20,7 +20,7 @@
 using namespace llvm;
 
 using ValueType = unsigned long long;
-using SymbolTable = DenseMap<Instruction *, ValueType>;
+using SymbolTable = DenseMap<Value *, ValueType>;
 
 void preprocess(Module &M);
 

@@ -56,7 +56,7 @@ auto MASLoop::analyze() -> bool {  // whether the loop is analyzable
                         indVars.push_back(curIndVar);
                         parent->indVars.insert(cast<Value>(phi));
                         ret = true;
-                        parent->instrMeta[phi].indVar = &*indVars.rbegin();
+                        parent->instrMeta[phi].indVar = &indVars.back();
                     }
                 }
             }

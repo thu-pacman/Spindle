@@ -1,6 +1,7 @@
 #include "STracer.h"
 
 #include <queue>
+#include <ranges>
 
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -17,6 +18,7 @@ auto DTraceParser::parseBr() -> bool {
     std::string line;
     std::getline(dtrace, line);
     assert(line[0] == 'b');
+    errs() << line << '\n';
     return line[1] - '0';
 }
 
@@ -24,6 +26,7 @@ auto DTraceParser::parseValue() -> ValueType {
     std::string line;
     std::getline(dtrace, line);
     assert(line[0] == 'v');
+    errs() << line << '\n';
     return std::stoull(line.substr(1));
 }
 
@@ -110,11 +113,13 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
                                 ++cnt;
                                 F->instrMeta[&I].formula = formula;
                                 InstrumentationVisitor([&](ASTLeafNode *v) {
-                                    auto def = dyn_cast<Instruction>(v->v);
-                                    if (def && loop->isLoopInvariant(v->v)) {
-                                        instrument->record_value(def);
+                                    if (!isa<ConstantData>(v->v) &&
+                                        loop->isLoopInvariant(v->v)) {
+                                        instrument->record_value(v->v);
                                     }
                                 }).dispatch(formula);
+                                // TODO: prune instrumentation for parent loop
+                                // invariant (nested_loop.c)
                             }
                         }
                         if (!formula->computable || fullMem) {
@@ -134,9 +139,16 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
 void STracer::replay(Function *func,
                      DTraceParser &dtrace,
                      raw_fd_ostream &out,
-                     const std::set<Instruction *> &instrumentedSymbols,
+                     const InstrumentationBase *instrument,
                      SymbolTable &table) {
-    MASFunction *MASFunc = nullptr;
+    auto &instrumentedSymbols = instrument->getInstrumentedSymbols();
+    if (func->getName().equals("main")) {
+        for (auto instrumentedGlobal :
+             std::ranges::reverse_view(instrument->getInstrumentedGlobals())) {
+            table[instrumentedGlobal] = dtrace.parseValue();
+        }
+    }
+    MASFunction *MASFunc;
     for (auto f : MAS.functions) {
         if (&f->func == func) {
             MASFunc = f;
