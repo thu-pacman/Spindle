@@ -61,10 +61,10 @@ public:
 class MASModule {
 public:
     Module *module;
+    LLVMContext *context;
     std::vector<MASFunction *> functions;
     size_t num_loops;
     size_t num_computable_loops;
-    LLVMContext *context;
 
     explicit MASModule(Module &M);
     ~MASModule();

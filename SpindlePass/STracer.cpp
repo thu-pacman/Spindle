@@ -105,8 +105,6 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
                                   [](Value *v) { return isa<ConstantData>(v); },
                                   &MAS);
                     auto formula = visitor.visitValue(ptr);
-                    formula->print(errs());
-                    errs() << ' ' << formula->computable << '\n';
                     if (loop && !fullMem) {
                         ++tot;
                         if (formula->computable) {
@@ -140,14 +138,13 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
 void STracer::replay(Function *func,
                      DTraceParser &dtrace,
                      raw_fd_ostream &out,
-                     const InstrumentationBase *instrument,
+                     InstrumentationBase *instrument,
                      SymbolTable &table) {
     auto &instrumentedSymbols = instrument->getInstrumentedSymbols();
-    if (func->getName().equals("main")) {
-        for (auto instrumentedGlobal :
-             std::ranges::reverse_view(instrument->getInstrumentedGlobals())) {
-            table[instrumentedGlobal] = dtrace.parseValue();
-        }
+    // deal with globals and arguments
+    for (auto instrumentedGlobal : std::ranges::reverse_view(
+             instrument->getInstrumentedArgs(func->getName()))) {
+        table[instrumentedGlobal] = dtrace.parseValue();
     }
     MASFunction *MASFunc;
     for (auto f : MAS.functions) {
@@ -169,7 +166,12 @@ void STracer::replay(Function *func,
                 }
                 break;
             }
-            // TODO: function call
+            if (auto CallI = dyn_cast<CallInst>(&I)) {
+                auto calledFunc = CallI->getCalledFunction();
+                if (!calledFunc->isDeclaration()) {
+                    replay(calledFunc, dtrace, out, instrument, table);
+                }
+            }
             if (instrumentedSymbols.find(&I) != instrumentedSymbols.end()) {
                 table[&I] = dtrace.parseValue();
             }

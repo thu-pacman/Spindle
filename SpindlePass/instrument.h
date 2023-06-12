@@ -7,7 +7,7 @@ class InstrumentationBase {
 protected:
     Module &M;
     std::set<Value *> valueRecorded;
-    SmallVector<GlobalValue *> globalRecorded;
+    StringMap<SmallVector<GlobalValue *>> funcArgRecorded;
 
 public:
     explicit InstrumentationBase(Module &M) : M(M) {
@@ -19,8 +19,8 @@ public:
     [[nodiscard]] auto &getInstrumentedSymbols() const {
         return valueRecorded;
     }
-    [[nodiscard]] auto &getInstrumentedGlobals() const {
-        return globalRecorded;
+    [[nodiscard]] auto &getInstrumentedArgs(StringRef funcName) {
+        return funcArgRecorded[funcName];
     }
     virtual void init_main(Instruction *I) const {
     }
@@ -32,7 +32,7 @@ public:
         if (valueRecorded.find(V) == valueRecorded.end()) {
             valueRecorded.insert(V);
             if (auto GV = dyn_cast<GlobalValue>(V)) {
-                globalRecorded.push_back(GV);
+                funcArgRecorded["main"].push_back(GV);
             }
         }
     }
@@ -77,9 +77,11 @@ public:
                 ;
             builder = new IRBuilder(nextNonPhi);
         } else {
-            V = cast<GlobalValue>(V);
-            builder =
-                new IRBuilder(&M.getFunction("main")->getEntryBlock().front());
+            auto funcName = isa<GlobalValue>(V)
+                                ? "main"
+                                : cast<Argument>(V)->getParent()->getName();
+            builder = new IRBuilder(
+                &M.getFunction(funcName)->getEntryBlock().front());
         }
         auto type =
             FunctionType::get(builder->getVoidTy(), {V->getType()}, false);

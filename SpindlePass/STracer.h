@@ -29,7 +29,7 @@ public:
     void replay(Function *func,
                 DTraceParser &dtrace,
                 raw_fd_ostream &out,
-                const InstrumentationBase *instrument,
+                InstrumentationBase *instrument,
                 SymbolTable &table);
 };
 

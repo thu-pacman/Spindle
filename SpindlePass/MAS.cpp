@@ -97,8 +97,7 @@ MASFunction::MASFunction(Function &func, MASModule *module)
     }
 }
 
-MASModule::MASModule(Module &M) {
-    module = &M;
+MASModule::MASModule(Module &M) : module(&M) {
     context = new LLVMContext;
     functions.clear();
     for (auto &F : M) {
