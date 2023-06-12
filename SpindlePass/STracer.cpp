@@ -71,7 +71,8 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
             }
         }
         for (auto &BB : F->func) {
-            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord ||
+            if (!F->bbMeta[&BB].inMASLoop && F->bbMeta[&BB].needRecord &&
+                    !fullMem ||
                 fullBr) {
                 if (auto BrI = dyn_cast<BranchInst>(BB.getTerminator());
                     BrI && BrI->isConditional()) {  // instrument for br
@@ -83,45 +84,52 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
         // step 3: record static trace
         for (auto &BB : F->func) {
             auto loop = F->bbMeta[&BB].loop;
-            if (loop) {
+            if (loop && !fullMem) {
                 for (auto &indVar : loop->indVars) {
                     if (auto def = dyn_cast<Instruction>(indVar.initValue)) {
-                        instrument->record_value(def);
+                        if (!F->instrMeta[def].indVar) {
+                            instrument->record_value(def);
+                        }
                     }
                 }
             }
             for (auto &I : BB) {
                 if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
                     auto ptr = getPointerOperand(&I);
-                    auto visitor =
-                        loop
-                            ? FormulaVisitor(
-                                  [&](Value *v) {
-                                      return loop->isLoopInvariant(v) ||
-                                             F->indVars.count(v);
-                                  },
-                                  &MAS)
-                            : FormulaVisitor(
-                                  [](Value *v) { return isa<ConstantData>(v); },
-                                  &MAS);
-                    auto formula = visitor.visitValue(ptr);
-                    if (loop && !fullMem) {
-                        ++tot;
-                        if (formula->computable) {
-                            ++cnt;
-                            F->instrMeta[&I].formula = formula;
-                            InstrumentationVisitor([&](ASTLeafNode *v) {
-                                if (!isa<ConstantData>(v->v) &&
-                                    loop->isLoopInvariant(v->v)) {
-                                    instrument->record_value(v->v);
-                                }
-                            }).dispatch(formula);
-                            // TODO: prune instrumentation for parent loop
-                            // invariant (nested_loop.c)
+                    if (fullMem) {
+                        ((Instrumentation *) instrument)->record_value(ptr, &I);
+                    } else {
+                        auto visitor =
+                            loop ? FormulaVisitor(
+                                       [&](Value *v) {
+                                           return loop->isLoopInvariant(v) ||
+                                                  F->indVars.count(v);
+                                       },
+                                       &MAS)
+                                 : FormulaVisitor(
+                                       [](Value *v) {
+                                           return isa<ConstantData>(v);
+                                       },
+                                       &MAS);
+                        auto formula = visitor.visitValue(ptr);
+                        if (loop && !fullMem) {
+                            ++tot;
+                            if (formula->computable) {
+                                ++cnt;
+                                F->instrMeta[&I].formula = formula;
+                                InstrumentationVisitor([&](ASTLeafNode *v) {
+                                    if (!isa<ConstantData>(v->v) &&
+                                        loop->isLoopInvariant(v->v)) {
+                                        instrument->record_value(v->v);
+                                    }
+                                }).dispatch(formula);
+                                // TODO: prune instrumentation for parent loop
+                                // invariant (nested_loop.c)
+                            }
                         }
-                    }
-                    if (!formula->computable || fullMem) {
-                        instrument->record_value(ptr);
+                        if (!formula->computable) {
+                            instrument->record_value(ptr);
+                        }
                     }
                 }
             }
@@ -179,8 +187,7 @@ void STracer::replay(Function *func,
             if (auto indVar = MASFunc->instrMeta[&I].indVar) {
                 if (table.find(&I) == table.end()) {  // init value
                     auto initDef = dyn_cast<Instruction>(indVar->initValue);
-                    if (instrumentedSymbols.find(initDef) !=
-                        instrumentedSymbols.end()) {
+                    if (table.find(initDef) != table.end()) {
                         table[&I] = table[initDef];
                     } else {
                         table[&I] = cast<ConstantInt>(indVar->initValue)

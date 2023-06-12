@@ -69,24 +69,20 @@ public:
             return;
         }
         valueRecorded.insert(V);
-        IRBuilder<> *builder;
         if (auto I = dyn_cast<Instruction>(V)) {
-            auto nextNonPhi = I->getNextNode();
-            for (; nextNonPhi != nullptr && isa<PHINode>(nextNonPhi);
-                 nextNonPhi = nextNonPhi->getNextNode())
-                ;
-            builder = new IRBuilder(nextNonPhi);
+            record_value(V, I->getNextNode());
         } else {
             auto funcName = isa<GlobalValue>(V)
                                 ? "main"
                                 : cast<Argument>(V)->getParent()->getName();
-            builder = new IRBuilder(
-                &M.getFunction(funcName)->getEntryBlock().front());
+            record_value(V, &M.getFunction(funcName)->getEntryBlock().front());
         }
+    }
+    void record_value(Value *V, Instruction *I) {
+        IRBuilder builder(I);
         auto type =
-            FunctionType::get(builder->getVoidTy(), {V->getType()}, false);
+            FunctionType::get(builder.getVoidTy(), {V->getType()}, false);
         auto func = M.getOrInsertFunction("__spindle_record_value", type);
-        builder->CreateCall(func, {V});
-        delete builder;
+        builder.CreateCall(func, {V});
     }
 };
