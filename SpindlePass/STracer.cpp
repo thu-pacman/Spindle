@@ -92,48 +92,49 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
             }
             for (auto &I : BB) {
                 if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
-                    if (auto def =
-                            dyn_cast<Instruction>(getPointerOperand(&I))) {
-                        auto visitor =
-                            loop ? FormulaVisitor(
-                                       [&](Value *v) {
-                                           return loop->isLoopInvariant(v) ||
-                                                  F->indVars.count(v);
-                                       },
-                                       &MAS)
-                                 : FormulaVisitor(
-                                       [](Value *v) {
-                                           return Constant::classof(v);
-                                       },
-                                       &MAS);
-                        auto formula = visitor.visit(def);
-                        if (loop) {
-                            ++tot;
-                            if (formula->computable) {
-                                ++cnt;
-                                F->instrMeta[&I].formula = formula;
-                                InstrumentationVisitor([&](ASTLeafNode *v) {
-                                    if (!isa<ConstantData>(v->v) &&
-                                        loop->isLoopInvariant(v->v)) {
-                                        instrument->record_value(v->v);
-                                    }
-                                }).dispatch(formula);
-                                // TODO: prune instrumentation for parent loop
-                                // invariant (nested_loop.c)
-                            }
+                    auto ptr = getPointerOperand(&I);
+                    auto visitor =
+                        loop
+                            ? FormulaVisitor(
+                                  [&](Value *v) {
+                                      return loop->isLoopInvariant(v) ||
+                                             F->indVars.count(v);
+                                  },
+                                  &MAS)
+                            : FormulaVisitor(
+                                  [](Value *v) { return isa<ConstantData>(v); },
+                                  &MAS);
+                    auto formula = visitor.visitValue(ptr);
+                    formula->print(errs());
+                    errs() << ' ' << formula->computable << '\n';
+                    if (loop && !fullMem) {
+                        ++tot;
+                        if (formula->computable) {
+                            ++cnt;
+                            F->instrMeta[&I].formula = formula;
+                            InstrumentationVisitor([&](ASTLeafNode *v) {
+                                if (!isa<ConstantData>(v->v) &&
+                                    loop->isLoopInvariant(v->v)) {
+                                    instrument->record_value(v->v);
+                                }
+                            }).dispatch(formula);
+                            // TODO: prune instrumentation for parent loop
+                            // invariant (nested_loop.c)
                         }
-                        if (!formula->computable || fullMem) {
-                            instrument->record_value(def);
-                        }
+                    }
+                    if (!formula->computable || fullMem) {
+                        instrument->record_value(ptr);
                     }
                 }
             }
         }
     }
-    errs() << "Computable loops: " << MAS.num_computable_loops << '/'
-           << MAS.num_loops << '\n';
-    errs() << "Computable memory accesses in loops: " << cnt << '/' << tot
-           << '\n';
+    if (!fullMem) {
+        errs() << "Computable loops: " << MAS.num_computable_loops << '/'
+               << MAS.num_loops << '\n';
+        errs() << "Computable memory accesses in loops: " << cnt << '/' << tot
+               << '\n';
+    }
 }
 
 void STracer::replay(Function *func,
@@ -190,15 +191,14 @@ void STracer::replay(Function *func,
             }
             // replay mem trace
             if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
-                if (auto def = dyn_cast<Instruction>(getPointerOperand(&I))) {
-                    if (instrumentedSymbols.find(def) !=
-                        instrumentedSymbols.end()) {
-                        out << table[def] << '\n';
-                    } else {
-                        out << CalculationVisitor(table).dispatch(
-                                   MASFunc->instrMeta[&I].formula)
-                            << '\n';
-                    }
+                auto ptr = getPointerOperand(&I);
+                if (instrumentedSymbols.find(ptr) !=
+                    instrumentedSymbols.end()) {
+                    out << table[ptr] << '\n';
+                } else {
+                    out << CalculationVisitor(table).dispatch(
+                               MASFunc->instrMeta[&I].formula)
+                        << '\n';
                 }
             }
         }
