@@ -87,6 +87,7 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
             if (loop && !fullMem) {
                 for (auto &indVar : loop->indVars) {
                     if (auto def = dyn_cast<Instruction>(indVar.initValue)) {
+                        // TODO: more fine-grained check with FormulaVisitor
                         if (!F->instrMeta[def].indVar) {
                             instrument->record_value(def);
                         }
@@ -146,7 +147,7 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
 void STracer::replay(Function *func,
                      DTraceParser &dtrace,
                      raw_fd_ostream &out,
-                     InstrumentationBase *instrument,
+                     InstrumentationDummy *instrument,
                      SymbolTable &table) {
     auto &instrumentedSymbols = instrument->getInstrumentedSymbols();
     // deal with globals and arguments

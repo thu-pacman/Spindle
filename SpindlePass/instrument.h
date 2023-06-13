@@ -2,25 +2,16 @@
 #include "llvm/IR/IRBuilder.h"
 
 using namespace llvm;
-
 class InstrumentationBase {
 protected:
     Module &M;
     std::set<Value *> valueRecorded;
-    StringMap<SmallVector<GlobalValue *>> funcArgRecorded;
 
 public:
     explicit InstrumentationBase(Module &M) : M(M) {
     }
-
     [[nodiscard]] auto getName() const {
         return M.getName();
-    }
-    [[nodiscard]] auto &getInstrumentedSymbols() const {
-        return valueRecorded;
-    }
-    [[nodiscard]] auto &getInstrumentedArgs(StringRef funcName) {
-        return funcArgRecorded[funcName];
     }
     virtual void init_main(Instruction *I) const {
     }
@@ -29,6 +20,22 @@ public:
     virtual void record_br(BranchInst *I) const {
     }
     virtual void record_value(Value *V) {
+    }
+};
+
+class InstrumentationDummy : public InstrumentationBase {
+    StringMap<SmallVector<GlobalValue *>> funcArgRecorded;
+
+public:
+    explicit InstrumentationDummy(Module &M) : InstrumentationBase(M) {
+    }
+    [[nodiscard]] auto &getInstrumentedSymbols() const {
+        return valueRecorded;
+    }
+    [[nodiscard]] auto &getInstrumentedArgs(StringRef funcName) {
+        return funcArgRecorded[funcName];
+    }
+    void record_value(Value *V) override {
         if (valueRecorded.find(V) == valueRecorded.end()) {
             valueRecorded.insert(V);
             if (auto GV = dyn_cast<GlobalValue>(V)) {
@@ -79,6 +86,8 @@ public:
         }
     }
     void record_value(Value *V, Instruction *I) {
+        for (; isa<PHINode>(I); I = I->getNextNode())
+            ;
         IRBuilder builder(I);
         auto type =
             FunctionType::get(builder.getVoidTy(), {V->getType()}, false);

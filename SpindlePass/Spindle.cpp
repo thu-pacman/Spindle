@@ -32,19 +32,18 @@ public:
         // preprocess(M);  // to expand nested_GEPInst
 
         MASModule MAS(M);
-        auto *instrument =
-            replay ? new InstrumentationBase(M) : new Instrumentation(M);
         STracer stracer(MAS);
-        stracer.run(instrument, fullMem, fullBr);
         if (!replay) {
+            Instrumentation instrument(M);
+            stracer.run(&instrument, fullMem, fullBr);
             // instrument for main function
             if (auto main = M.getFunction("main")) {
                 // init main
-                instrument->init_main(&main->getEntryBlock().front());
+                instrument.init_main(&main->getEntryBlock().front());
                 // fini main
                 for (auto &BB : *main) {
                     if (auto RetI = dyn_cast<ReturnInst>(BB.getTerminator())) {
-                        instrument->fini_main(RetI);
+                        instrument.fini_main(RetI);
                     }
                 }
                 for (auto &F : M) {
@@ -53,7 +52,7 @@ public:
                             if (auto CallI = dyn_cast<CallInst>(&I)) {
                                 auto func = CallI->getCalledFunction();
                                 if (func && func->getName().equals("exit")) {
-                                    instrument->fini_main(CallI);
+                                    instrument.fini_main(CallI);
                                 }
                             }
                         }
@@ -64,6 +63,8 @@ public:
             PA.preserveSet<CFGAnalyses>();
             return PA;
         } else {
+            InstrumentationDummy instrument(M);
+            stracer.run(&instrument, fullMem, fullBr);
             std::error_code ec;
             raw_fd_ostream full_trace("full_trace.log", ec);
             DTraceParser dTraceParser("dtrace.log");
@@ -71,7 +72,7 @@ public:
             stracer.replay(M.getFunction("main"),
                            dTraceParser,
                            full_trace,
-                           instrument,
+                           &instrument,
                            table);
             return PreservedAnalyses::all();
         }
