@@ -24,7 +24,7 @@ public:
 };
 
 class InstrumentationDummy : public InstrumentationBase {
-    StringMap<SmallVector<GlobalValue *>> funcArgRecorded;
+    StringMap<SmallVector<Value *>> funcArgRecorded;
 
 public:
     explicit InstrumentationDummy(Module &M) : InstrumentationBase(M) {
@@ -38,8 +38,11 @@ public:
     void record_value(Value *V) override {
         if (valueRecorded.find(V) == valueRecorded.end()) {
             valueRecorded.insert(V);
-            if (auto GV = dyn_cast<GlobalValue>(V)) {
-                funcArgRecorded["main"].push_back(GV);
+            if (!isa<Instruction>(V)) {
+                auto funcName = isa<Argument>(V)
+                                    ? cast<Argument>(V)->getParent()->getName()
+                                    : "main";
+                funcArgRecorded[funcName].push_back(V);
             }
         }
     }
@@ -79,9 +82,9 @@ public:
         if (auto I = dyn_cast<Instruction>(V)) {
             record_value(V, I->getNextNode());
         } else {
-            auto funcName = isa<GlobalValue>(V)
-                                ? "main"
-                                : cast<Argument>(V)->getParent()->getName();
+            auto funcName = isa<Argument>(V)
+                                ? cast<Argument>(V)->getParent()->getName()
+                                : "main";
             record_value(V, &M.getFunction(funcName)->getEntryBlock().front());
         }
     }

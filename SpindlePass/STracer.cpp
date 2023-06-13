@@ -18,7 +18,7 @@ auto DTraceParser::parseBr() -> bool {
     std::string line;
     std::getline(dtrace, line);
     assert(line[0] == 'b');
-    errs() << line << '\n';
+    // errs() << line << '\n';
     return line[1] - '0';
 }
 
@@ -26,7 +26,7 @@ auto DTraceParser::parseValue() -> ValueType {
     std::string line;
     std::getline(dtrace, line);
     assert(line[0] == 'v');
-    errs() << line << '\n';
+    // errs() << line << '\n';
     return std::stoull(line.substr(1));
 }
 
