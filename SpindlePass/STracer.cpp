@@ -98,7 +98,14 @@ void STracer::run(InstrumentationBase *instrument, bool fullMem, bool fullBr) {
                 if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
                     auto ptr = getPointerOperand(&I);
                     if (fullMem) {
-                        ((Instrumentation *) instrument)->record_value(ptr, &I);
+                        Instruction &instrumentI =
+                            F->func.getSection().equals(".text.startup")
+                                ? MAS.module->getFunction("main")
+                                      ->getEntryBlock()
+                                      .front()
+                                : I;
+                        ((Instrumentation *) instrument)
+                            ->record_value(ptr, &instrumentI);
                     } else {
                         auto visitor =
                             loop ? FormulaVisitor(
@@ -161,6 +168,7 @@ void STracer::replay(Function *func,
             MASFunc = f;
         }
     }
+    auto visitor = CalculationVisitor(table);
     for (auto *curBB = &func->getEntryBlock();;) {
         for (auto &I : *curBB) {
             if (isa<ReturnInst>(I)) {
@@ -195,8 +203,7 @@ void STracer::replay(Function *func,
                                         ->getZExtValue();
                     }
                 } else {
-                    table[&I] =
-                        CalculationVisitor(table).dispatch(indVar->delta);
+                    table[&I] = visitor.dispatch(indVar->delta);
                 }
             }
             // replay mem trace
@@ -206,8 +213,7 @@ void STracer::replay(Function *func,
                     instrumentedSymbols.end()) {
                     out << table[ptr] << '\n';
                 } else {
-                    out << CalculationVisitor(table).dispatch(
-                               MASFunc->instrMeta[&I].formula)
+                    out << visitor.dispatch(MASFunc->instrMeta[&I].formula)
                         << '\n';
                 }
             }

@@ -1,5 +1,6 @@
 #include "STracer.h"
 #include "instrument.h"
+#include "llvm/Transforms/Utils.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/FileSystem.h"

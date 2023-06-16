@@ -1,6 +1,7 @@
 #include "visitor.h"
 
 #include "llvm/IR/GetElementPtrTypeIterator.h"
+#include "llvm/IR/IRBuilder.h"
 #include "utils.h"
 
 FormulaVisitor::FormulaVisitor(decltype(leafChecker) leafComputableChecker,
