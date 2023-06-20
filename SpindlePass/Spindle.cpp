@@ -74,7 +74,8 @@ public:
                            dTraceParser,
                            full_trace,
                            &instrument,
-                           table);
+                           table,
+                           fullBr);
             return PreservedAnalyses::all();
         }
     }

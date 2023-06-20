@@ -155,7 +155,8 @@ void STracer::replay(Function *func,
                      DTraceParser &dtrace,
                      raw_fd_ostream &out,
                      InstrumentationDummy *instrument,
-                     SymbolTable &table) {
+                     SymbolTable &table,
+                     bool fullBr) {
     auto &instrumentedSymbols = instrument->getInstrumentedSymbols();
     // deal with globals and arguments
     for (auto instrumentedGlobal : std::ranges::reverse_view(
@@ -177,7 +178,11 @@ void STracer::replay(Function *func,
             // reach the end of basic block
             if (auto BrI = dyn_cast<BranchInst>(&I)) {
                 if (BrI->isConditional()) {
-                    curBB = BrI->getSuccessor(!dtrace.parseBr());
+                    auto br = dtrace.parseBr();
+                    if (fullBr) {
+                        out << 'b' << br << '\n';
+                    }
+                    curBB = BrI->getSuccessor(!br);
                 } else {
                     curBB = BrI->getSuccessor(0);
                 }
@@ -186,7 +191,7 @@ void STracer::replay(Function *func,
             if (auto CallI = dyn_cast<CallInst>(&I)) {
                 auto calledFunc = CallI->getCalledFunction();
                 if (!calledFunc->isDeclaration()) {
-                    replay(calledFunc, dtrace, out, instrument, table);
+                    replay(calledFunc, dtrace, out, instrument, table, fullBr);
                 }
             }
             if (instrumentedSymbols.find(&I) != instrumentedSymbols.end()) {
@@ -209,6 +214,7 @@ void STracer::replay(Function *func,
             // replay mem trace
             if (isa<LoadInst>(I) || isa<StoreInst>(I)) {
                 auto ptr = getPointerOperand(&I);
+                out << 'v';
                 if (instrumentedSymbols.find(ptr) !=
                     instrumentedSymbols.end()) {
                     out << table[ptr] << '\n';

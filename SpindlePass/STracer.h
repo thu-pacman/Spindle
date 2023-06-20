@@ -30,7 +30,8 @@ public:
                 DTraceParser &dtrace,
                 raw_fd_ostream &out,
                 InstrumentationDummy *instrument,
-                SymbolTable &table);
+                SymbolTable &table,
+                bool fullBr);
 };
 
 }  // namespace llvm
